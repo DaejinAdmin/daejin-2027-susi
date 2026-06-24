@@ -91,7 +91,7 @@ with col_count:
     if st.session_state.show_counter:
         st.metric(label="수시 상담 누적 건수", value=f"{current_total_consultations} 건")
 
-st.markdown("일반/진로 구분 없이 입력 (A/B/C 입력 시 진로과목 인식) | 상위 18과목 반영 (진로 최대 8과목) | 미달 시 9등급 감점 적용")
+st.markdown("일반/진로 구분 없이 입력 (A/B/C 입력 시 진로과목 인식) | 상위 18과목 반영 (진로 최대 8과목) | 미달 시 9등급 적용")
 
 # --- 2. 스마트 입결 데이터 로드 (이중 헤더 병합 완벽 지원) ---
 @st.cache_data
