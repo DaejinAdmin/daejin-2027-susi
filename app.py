@@ -66,7 +66,6 @@ def increase_consulting_count():
 
 current_total_consultations = get_consulting_count()
 
-# 토글 상태 기억을 위한 세션 상태 메모리 초기화
 if "show_counter" not in st.session_state:
     st.session_state.show_counter = False
 
@@ -83,15 +82,15 @@ with col_title:
     st.title("2027학년도 대진대학교 수시 입학상담 솔루션")
 
 with col_count:
-    # 클릭 시 상태를 반전시키는 스마트 토글 버튼 주입
-    if st.button("📊 상담 확인", use_container_width=True):
-        st.session_state.show_counter = not st.session_state.show_counter
-    
-    # 클릭되어 True 상태일 때만 수치 카드 출력 (기본값은 완벽 은닉)
-    if st.session_state.show_counter:
-        st.metric(label="수시 상담 누적 건수", value=f"{current_total_consultations} 건")
+    # --- [보안 고도화 패치] URL 뒤에 ?admin=true 가 완벽하게 붙었을 때만 토글 버튼 작동 ---
+    if st.query_params.get("admin") == "true":
+        if st.button("📊 누적 건수 확인/숨기기", use_container_width=True):
+            st.session_state.show_counter = not st.session_state.show_counter
+        
+        if st.session_state.show_counter:
+            st.metric(label="실시간 수시 상담 누적 건수", value=f"{current_total_consultations} 건", delta="실시간 업카운트 가동 중", delta_color="normal")
 
-st.markdown("일반/진로 구분 없이 입력 (A/B/C 입력 시 진로과목 인식) | 상위 18과목 반영 (진로 최대 8과목) | 미달 시 9등급 적용")
+st.markdown("일반/진로 구분 없이 입력 (A/B/C 입력 시 진로과목 인식) | 상위 18과목 반영 (진로 최대 8과목) | 미달 시 9등급 감점 적용")
 
 # --- 2. 스마트 입결 데이터 로드 (이중 헤더 병합 완벽 지원) ---
 @st.cache_data
@@ -299,7 +298,7 @@ col_left, col_right = st.columns([6, 4])
 
 with col_left:
     with st.container(border=True):
-        st.markdown("### 🎯 성적 산출")
+        st.markdown("### 🎯 성적 산출 및 합격 예측 결과")
         
         col_btn, col_metric = st.columns(2)
         with col_btn:
@@ -373,7 +372,7 @@ with col_left:
                 if hwansan_avg != "-" and hwansan_cut != "-":
                     st.markdown(f"""
                     <div style="background-color: #edf4fe; padding: 16px 20px; border-left: 5px solid #00308F; border-radius: 6px; margin: 14px 0;">
-                        <div style="font-size: 18px; font-weight: bold; color: #00308F; margin-bottom: 8px;">💡 2027학년도 산출 방식 적용 환산 점수</div>
+                        <div style="font-size: 18px; font-weight: bold; color: #00308F; margin-bottom: 8px;">💡 2027학년도 산출 방식 적용 환산 점수 (예측 기준)</div>
                         <div style="font-size: 16px; color: #333333; font-weight: bold;">
                             ▶ 평균: <span style="color: #ff4b4b; font-weight: bold; font-size: 22px;">{hwansan_avg}</span> 등급 &nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp; 
                             최저: <span style="color: #ff4b4b; font-weight: bold; font-size: 22px;">{hwansan_cut}</span> 등급 &nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp; 
