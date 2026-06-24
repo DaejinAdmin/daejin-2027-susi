@@ -372,7 +372,7 @@ with col_left:
                 if hwansan_avg != "-" and hwansan_cut != "-":
                     st.markdown(f"""
                     <div style="background-color: #edf4fe; padding: 16px 20px; border-left: 5px solid #00308F; border-radius: 6px; margin: 14px 0;">
-                        <div style="font-size: 18px; font-weight: bold; color: #00308F; margin-bottom: 8px;">💡 2027학년도 산출 방식 적용 환산 점수 (예측 기준)</div>
+                        <div style="font-size: 18px; font-weight: bold; color: #00308F; margin-bottom: 8px;">💡 2027학년도 산출 방식 적용 환산 점수</div>
                         <div style="font-size: 16px; color: #333333; font-weight: bold;">
                             ▶ 평균: <span style="color: #ff4b4b; font-weight: bold; font-size: 22px;">{hwansan_avg}</span> 등급 &nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp; 
                             최저: <span style="color: #ff4b4b; font-weight: bold; font-size: 22px;">{hwansan_cut}</span> 등급 &nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp; 
