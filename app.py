@@ -2,8 +2,17 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import os
+import re
 
-# --- 1. 페이지 기본 설정 (가독성 높은 블랙 타이틀 + 붉은색 버튼 + 입력창 음영 강화) ---
+# ==================================================
+# 💡 [운영 모드 스위치] 배포 환경에 따라 True / False 만 변경하세요!
+# ==================================================
+IS_ONLINE_MODE = False  
+# True  = 온라인 배포용 (비밀 URL ?admin=true 로 접속해야 카운터 보임)
+# False = 오프라인 PC용 (비밀 URL 없이 카운터 버튼 즉시 사용 가능)
+# ==================================================
+
+# --- 1. 페이지 기본 설정 ---
 st.set_page_config(page_title="2027 대진대 수시 입학상담 솔루션", layout="wide")
 
 st.markdown("""
@@ -69,7 +78,6 @@ current_total_consultations = get_consulting_count()
 if "show_counter" not in st.session_state:
     st.session_state.show_counter = False
 
-# 로고, 타이틀, 토글형 카운터를 나란히 배치하기 위한 대시보드 격자 분할
 col_logo, col_title, col_count = st.columns([0.8, 8.2, 3.0])
 
 with col_logo:
@@ -82,17 +90,24 @@ with col_title:
     st.title("2027학년도 대진대학교 수시 입학상담 솔루션")
 
 with col_count:
-    # --- [보안 고도화 패치] URL 뒤에 ?admin=true 가 완벽하게 붙었을 때만 토글 버튼 작동 ---
-    if st.query_params.get("admin") == "true":
-        if st.button("📊 누적 건수 확인/숨기기", use_container_width=True):
+    if IS_ONLINE_MODE:
+        try:
+            is_admin = st.query_params.get("admin") == "true"
+        except AttributeError:
+            is_admin = st.experimental_get_query_params().get("admin", [""])[0] == "true"
+    else:
+        is_admin = True
+        
+    if is_admin:
+        if st.button("📊 상담 건수 확인", use_container_width=True):
             st.session_state.show_counter = not st.session_state.show_counter
         
         if st.session_state.show_counter:
-            st.metric(label="수시 상담 건수", value=f"{current_total_consultations} 건",)
+            st.metric(label="수시 상담 누적 건수", value=f"{current_total_consultations} 건")
 
 st.markdown("일반/진로 구분 없이 입력 (A/B/C 입력 시 진로과목 인식) | 상위 18과목 반영 (진로 최대 8과목) | 미달 시 9등급 적용")
 
-# --- 2. 스마트 입결 데이터 로드 (이중 헤더 병합 완벽 지원) ---
+# --- 2. 스마트 입결 데이터 로드 ---
 @st.cache_data
 def load_admission_data():
     db = {}
@@ -152,7 +167,7 @@ def load_admission_data():
 
 db = load_admission_data()
 
-# --- 3. 전형 및 학과 선택 UI (전형 방법 안내 및 면접 기출/공통 지정문항 연동) ---
+# --- 3. 전형 및 학과 선택 UI ---
 st.write("---")
 col_sel1, col_sel2 = st.columns(2)
 with col_sel1:
@@ -372,7 +387,7 @@ with col_left:
                 if hwansan_avg != "-" and hwansan_cut != "-":
                     st.markdown(f"""
                     <div style="background-color: #edf4fe; padding: 16px 20px; border-left: 5px solid #00308F; border-radius: 6px; margin: 14px 0;">
-                        <div style="font-size: 18px; font-weight: bold; color: #00308F; margin-bottom: 8px;">💡 2027학년도 산출 방식 적용 환산 점수</div>
+                        <div style="font-size: 18px; font-weight: bold; color: #00308F; margin-bottom: 8px;">💡 2027학년도 산출 방식 적용 환산 점수 (예측 기준)</div>
                         <div style="font-size: 16px; color: #333333; font-weight: bold;">
                             ▶ 평균: <span style="color: #ff4b4b; font-weight: bold; font-size: 22px;">{hwansan_avg}</span> 등급 &nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp; 
                             최저: <span style="color: #ff4b4b; font-weight: bold; font-size: 22px;">{hwansan_cut}</span> 등급 &nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp; 
@@ -432,19 +447,22 @@ with col_left:
                                     return v if pd.notna(v) else "-"
                             return "-"
                             
-                        avg_27 = _get_rec(["2027", "환산", "평균"])
-                        max_27 = _get_rec(["2027", "환산", "최고"])
+                        # [🚨 핵심 패치 🚨] 변수명 충돌 격리 (rec_ 접두어 사용)
+                        rec_avg_27 = _get_rec(["2027", "환산", "평균"])
+                        rec_max_27 = _get_rec(["2027", "환산", "최고"])
                         
                         p_avg, p_max = "-", "-"
-                        if avg_27 != "-" and max_27 != "-": p_avg, p_max = avg_27, max_27
+                        if rec_avg_27 != "-" and rec_max_27 != "-": p_avg, p_max = rec_avg_27, rec_max_27
                         else:
-                            avg_26 = _get_rec(["2026", "최종합격", "평균"])
-                            if avg_26 == "-": avg_26 = _get_rec(["2026", "평균"])
-                            if avg_26 == "-": avg_26 = _get_rec(["26", "평균"])
-                            max_26 = _get_rec(["2026", "최종합격", "최고"])
-                            if max_26 == "-": max_26 = _get_rec(["2026", "최고"])
-                            if max_26 == "-": max_26 = _get_rec(["26", "최고"])
-                            p_avg, p_max = avg_26, max_26
+                            rec_avg_26 = _get_rec(["2026", "최종합격", "평균"])
+                            if rec_avg_26 == "-": rec_avg_26 = _get_rec(["2026", "평균"])
+                            if rec_avg_26 == "-": rec_avg_26 = _get_rec(["26", "평균"])
+                            
+                            rec_max_26 = _get_rec(["2026", "최종합격", "최고"])
+                            if rec_max_26 == "-": rec_max_26 = _get_rec(["2026", "최고"])
+                            if rec_max_26 == "-": rec_max_26 = _get_rec(["26", "최고"])
+                            
+                            p_avg, p_max = rec_avg_26, rec_max_26
                             
                         if p_avg != "-" and p_max != "-":
                             try:
@@ -471,31 +489,83 @@ with col_left:
 with col_right:
     if (calc_clicked or manual_score > 0) and selected_dept != "데이터 로딩 실패" and selected_dept != "데이터 없음":
         import altair as alt
+        
         with st.container(border=True):
             st.markdown("### 📊 입시 데이터 추이 분석 시각화")
-            def to_float_for_chart(val):
-                try: return float(val)
-                except: return None
             
-            grade_chart_data = pd.DataFrame({
+            def safe_float(val):
+                try:
+                    v = str(val).strip()
+                    if pd.isna(val) or v in ["", "-", "nan", "NaN"]: return None
+                    cleaned = re.sub(r'[^\d.]', '', v)
+                    return float(cleaned) if cleaned else None
+                except: return None
+
+            def build_safe_row(m_val, a_val, c_val):
+                m = safe_float(m_val)
+                a = safe_float(a_val)
+                c = safe_float(c_val)
+                
+                valid = [v for v in [m, a, c] if v is not None]
+                if valid:
+                    fallback = valid[-1]
+                    if m is None: m = fallback
+                    if a is None: a = fallback
+                    if c is None: c = fallback
+                    return m, a, c
+                return None, None, None
+
+            def get_tooltip_str(val):
+                v = str(val).strip()
+                if pd.isna(val) or v in ["", "-", "nan", "NaN"]: return "-"
+                try:
+                    f_val = float(re.sub(r'[^\d.]', '', v))
+                    if f_val.is_integer(): return str(int(f_val))
+                    return f"{f_val:.2f}"
+                except: return v
+
+            m24_f, a24_f, c24_f = build_safe_row(max_24, avg_24, cut_24)
+            m25_f, a25_f, c25_f = build_safe_row(max_25, avg_25, cut_25)
+            m26_f, a26_f, c26_f = build_safe_row(max_26, avg_26, cut_26)
+
+            def get_render_bounds(m, c):
+                if m is None or c is None: return None, None
+                if m == c:
+                    return m - 0.05, c + 0.05 
+                return m, c
+
+            m24_r, c24_r = get_render_bounds(m24_f, c24_f)
+            m25_r, c25_r = get_render_bounds(m25_f, c25_f)
+            m26_r, c26_r = get_render_bounds(m26_f, c26_f)
+
+            df_grade = pd.DataFrame({
                 "연도": ["2024년", "2025년", "2026년"],
-                "최고": [to_float_for_chart(max_24), to_float_for_chart(max_25), to_float_for_chart(max_26)],
-                "평균": [to_float_for_chart(avg_24), to_float_for_chart(avg_25), to_float_for_chart(avg_26)],
-                "최저": [to_float_for_chart(cut_24), to_float_for_chart(cut_25), to_float_for_chart(cut_26)]
-            }).set_index("연도")
+                "최고_렌더": [m24_r, m25_r, m26_r],
+                "최저_렌더": [c24_r, c25_r, c26_r],
+                "평균": [a24_f, a25_f, a26_f],
+                "최고등급": [get_tooltip_str(max_24), get_tooltip_str(max_25), get_tooltip_str(max_26)],
+                "평균등급": [get_tooltip_str(avg_24), get_tooltip_str(avg_25), get_tooltip_str(avg_26)],
+                "최저등급": [get_tooltip_str(cut_24), get_tooltip_str(cut_25), get_tooltip_str(cut_26)]
+            })
             
             comp_chart_data = pd.DataFrame({
                 "연도": ["2024년", "2025년", "2026년"],
-                "경쟁률": [to_float_for_chart(comp_24), to_float_for_chart(comp_25), to_float_for_chart(comp_26)]
+                "경쟁률": [safe_float(comp_24), safe_float(comp_25), safe_float(comp_26)]
             }).set_index("연도")
             
-            if not grade_chart_data.isna().all().all():
+            if not df_grade[["최고_렌더", "최저_렌더", "평균"]].isna().all().all():
                 st.markdown("📈 **3개년 입결 등급 스펙트럼 차트**")
-                df_grade = grade_chart_data.reset_index()
+                
                 bar = alt.Chart(df_grade).mark_bar(size=45, color='#00308F', opacity=0.55, cornerRadius=4).encode(
                     x=alt.X('연도:N', title=None, axis=alt.Axis(labelAngle=0, labelFontSize=12, labelFontWeight='bold')),
-                    y=alt.Y('최고:Q', scale=alt.Scale(zero=False, reverse=True), title='등급'), y2='최저:Q',
-                    tooltip=[alt.Tooltip('연도:N'), alt.Tooltip('최고:Q'), alt.Tooltip('평균:Q'), alt.Tooltip('최저:Q')]
+                    y=alt.Y('최고_렌더:Q', scale=alt.Scale(zero=False, reverse=True), title='등급'), 
+                    y2='최저_렌더:Q',
+                    tooltip=[
+                        alt.Tooltip('연도:N'), 
+                        alt.Tooltip('최고등급:N'), 
+                        alt.Tooltip('평균등급:N'), 
+                        alt.Tooltip('최저등급:N')
+                    ]
                 )
                 tick = alt.Chart(df_grade).mark_tick(color='#ff4b4b', thickness=4.5, size=45).encode(x='연도:N', y='평균:Q')
                 st.altair_chart(alt.layer(bar, tick).properties(height=275), use_container_width=True)
@@ -515,7 +585,7 @@ with col_right:
                 text = base.mark_text(dy=-18, fontSize=13, fontWeight='bold', color='#000000').encode(text='레이블:N')
                 st.altair_chart(alt.layer(area, line, points, text).properties(height=275), use_container_width=True)
 
-# --- 7. 전체 학과 입시 결과 요약표 (컬러 스타일링 및 하이라이트 적용) ---
+# --- 7. 전체 학과 입시 결과 요약표 ---
 st.write("---")
 st.markdown(f"### 📋 [{selected_track}] 전체 학과 3개년 입결 종합표")
 st.caption("※ 현재 상담 중인 **선택 학과**는 노란색으로 표시됩니다.")
