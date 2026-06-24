@@ -1,0 +1,578 @@
+import streamlit as st
+import pandas as pd
+import numpy as np
+import os
+
+# --- 1. 페이지 기본 설정 (가독성 높은 블랙 타이틀 + 붉은색 버튼 + 입력창 음영 강화) ---
+st.set_page_config(page_title="2027 대진대 수시 입학상담 솔루션", layout="wide")
+
+st.markdown("""
+<style>
+    .stApp { background-color: #f7f9fc; }
+    h1, h2, h3, h4 { color: #000000 !important; }
+    
+    div.stButton > button[kind="primary"] {
+        background-color: #ff4b4b !important;
+        border-color: #ff4b4b !important;
+        color: #ffffff !important;
+        font-weight: 800 !important;
+    }
+    div.stButton > button[kind="primary"]:hover {
+        background-color: #e63939 !important;
+        border-color: #e63939 !important;
+    }
+    
+    div[data-testid="stMetricValue"] {
+        color: #00308F !important;
+    }
+
+    div[data-baseweb="select"] > div {
+        background-color: #e2e8f0 !important; 
+        border: 1px solid #cbd5e1 !important; 
+    }
+
+    .grade-title-panel {
+        font-size: 15px;
+        font-weight: 700;
+        color: #00308F;
+        border-left: 4px solid #00308F;
+        padding-left: 8px;
+        margin-bottom: 12px;
+        margin-top: 5px;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# --- 실시간 누적 상담 카운팅 파일 제어 엔진 ---
+COUNT_FILE = "consulting_count.txt"
+
+def get_consulting_count():
+    if not os.path.exists(COUNT_FILE):
+        with open(COUNT_FILE, "w", encoding="utf-8") as f:
+            f.write("0")
+        return 0
+    try:
+        with open(COUNT_FILE, "r", encoding="utf-8") as f:
+            return int(f.read().strip())
+    except:
+        return 0
+
+def increase_consulting_count():
+    current = get_consulting_count()
+    new_count = current + 1
+    with open(COUNT_FILE, "w", encoding="utf-8") as f:
+        f.write(str(new_count))
+    return new_count
+
+current_total_consultations = get_consulting_count()
+
+# 토글 상태 기억을 위한 세션 상태 메모리 초기화
+if "show_counter" not in st.session_state:
+    st.session_state.show_counter = False
+
+# 로고, 타이틀, 토글형 카운터를 나란히 배치하기 위한 대시보드 격자 분할
+col_logo, col_title, col_count = st.columns([0.8, 8.2, 3.0])
+
+with col_logo:
+    if os.path.exists("logo.png"): st.image("logo.png", use_column_width=True)
+    elif os.path.exists("logo.jpg"): st.image("logo.jpg", use_column_width=True)
+    elif os.path.exists("logo.png.png"): st.image("logo.png.png", use_column_width=True)
+    elif os.path.exists("스크린샷 2026-06-24 093817.png"): st.image("스크린샷 2026-06-24 093817.png", use_column_width=True)
+
+with col_title:
+    st.title("2027학년도 대진대학교 수시 입학상담 솔루션")
+
+with col_count:
+    # 클릭 시 상태를 반전시키는 스마트 토글 버튼 주입
+    if st.button("📊 상담 확인", use_container_width=True):
+        st.session_state.show_counter = not st.session_state.show_counter
+    
+    # 클릭되어 True 상태일 때만 수치 카드 출력 (기본값은 완벽 은닉)
+    if st.session_state.show_counter:
+        st.metric(label="수시 상담 누적 건수", value=f"{current_total_consultations} 건")
+
+st.markdown("일반/진로 구분 없이 입력 (A/B/C 입력 시 진로과목 인식) | 상위 18과목 반영 (진로 최대 8과목) | 미달 시 9등급 감점 적용")
+
+# --- 2. 스마트 입결 데이터 로드 (이중 헤더 병합 완벽 지원) ---
+@st.cache_data
+def load_admission_data():
+    db = {}
+    files = os.listdir(".")
+    targets = {"학생부우수자": "학생부우수자", "윈윈대진": "윈윈대진", "학교장추천": "학교장추천"}
+
+    for track_name, keyword in targets.items():
+        matched_file = None
+        for f in files:
+            if keyword in f and not f.startswith("~"):
+                matched_file = f
+                break
+
+        if matched_file:
+            try:
+                if matched_file.endswith(".csv"):
+                    temp_df = pd.read_csv(matched_file, encoding="utf-8-sig", header=None)
+                else:
+                    temp_df = pd.read_excel(matched_file, header=None)
+
+                idx_mojib = -1
+                for i in range(min(5, len(temp_df))):
+                    if any("모집단위" in str(x).replace(" ", "") for x in temp_df.iloc[i].values):
+                        idx_mojib = i
+                        break
+                        
+                if idx_mojib != -1:
+                    row_top = pd.Series(temp_df.iloc[idx_mojib].values).ffill().fillna("").astype(str)
+                    row_bottom = pd.Series(temp_df.iloc[idx_mojib + 1].values).fillna("").astype(str)
+                    
+                    new_cols = []
+                    for t, b in zip(row_top, row_bottom):
+                        t = t.replace("\n", "").strip()
+                        b = b.replace("\n", "").strip()
+                        if t == b or b == "" or b == "nan":
+                            new_cols.append(t)
+                        elif t == "" or t == "nan":
+                            new_cols.append(b)
+                        else:
+                            new_cols.append(f"{t}_{b}")
+                            
+                    temp_df.columns = new_cols
+                    temp_df = temp_df.iloc[idx_mojib + 2:].reset_index(drop=True)
+                    temp_df.rename(columns=lambda x: "모집단위" if "모집단위" in x else x, inplace=True)
+                
+                db[track_name] = temp_df
+            except Exception as e:
+                pass
+
+    dummy_data = pd.DataFrame({"모집단위": ["데이터 없음"], "평균": [0.0], "최저": [0.0], "최고": [0.0]})
+
+    for track_name in targets.keys():
+        if track_name not in db or db[track_name].empty:
+            db[track_name] = dummy_data
+
+    return db
+
+db = load_admission_data()
+
+# --- 3. 전형 및 학과 선택 UI (전형 방법 안내 및 면접 기출/공통 지정문항 연동) ---
+st.write("---")
+col_sel1, col_sel2 = st.columns(2)
+with col_sel1:
+    track_list = ["학생부우수자", "윈윈대진", "학교장추천"]
+    selected_track = st.selectbox("전형 선택", track_list)
+with col_sel2:
+    if "모집단위" in db[selected_track].columns:
+        custom_order = [
+            "영어영문학과", "문예콘텐츠창작학과", "역사·문화콘텐츠학과", "경영학과",
+            "글로벌경제학과", "국제통상학과", "공공인재법학과", "국제지역학과",
+            "중국학과", "아동학과", "사회복지학과", "미디어커뮤니케이션학과",
+            "행정정보학과", "문헌정보학과", "의생명과학과", "식품영양학과",
+            "간호학과", "보건경영학과", "스포츠건강과학과", "공학자율학부",
+            "전기공학과", "건축공학과", "AI건설융합공학과", "스마트시티·환경공학과",
+            "데이터경영산업공학과", "반도체융합공학과", "IT기계공학과", "화학공학과",
+            "컴퓨터공학과", "스마트융합보안학과", "AI빅데이터공학과", "스마트모빌리티공학과",
+            "자율전공학부"
+        ]
+        raw_dept_list = db[selected_track]["모집단위"].dropna().unique().tolist()
+        
+        dept_list = sorted([d for d in raw_dept_list if d in custom_order], key=lambda x: custom_order.index(x))
+        dept_list += sorted([d for d in raw_dept_list if d not in custom_order])
+    else:
+        dept_list = ["데이터 로딩 실패"]
+
+    selected_dept = st.selectbox("모집단위(학과) 선택", dept_list)
+
+eval_methods = {
+    "학생부우수자": "💡 **[학생부우수자] 전형 방법 :** 교과 70% + 면접 30%",
+    "학교장추천": "💡 **[학교장추천] 전형 방법 :** 교과 100%",
+    "윈윈대진": "💡 **[윈윈대진] 전형 방법 :** 1단계: 서류 100% ➔ 2단계: 1단계 성적 70% + 면접 30%"
+}
+st.info(eval_methods[selected_track])
+
+if selected_track == "학생부우수자" and selected_dept != "데이터 로딩 실패":
+    humanities = ["영어영문학과", "문예콘텐츠창작학과", "역사·문화콘텐츠학과", "경영학과", "글로벌경제학과", "국제통상학과", "공공인재법학과", "국제지역학과", "중국학과", "아동학과", "사회복지학과", "미디어커뮤니케이션학과", "행정정보학과", "문헌정보학과"]
+    sciences = ["의생명과학과", "식품영양학과", "간호학과", "보건경영학과", "스포츠건강과학과", "공학자율학부", "전기공학과", "건축공학과", "AI건설융합공학과", "스마트시티·환경공학과", "데이터경영산업공학과", "반도체융합공학과", "IT기계공학과", "화학공학과", "컴퓨터공학과", "스마트융합보안학과", "AI빅데이터공학과", "스마트모빌리티공학과"]
+    undecided = ["자율전공학부"]
+    
+    with st.expander(f"🗣️ [{selected_dept}] 면접 기출 문항 확인", expanded=False):
+        st.markdown(f"**※ {selected_dept} 면접 문항**")
+        q1 = "**1.** 자율주행차, 의료 AI 등 기술 발전으로 인해 알고리즘이 생사와 관련된 결정을 내리는 상황이 현실화되고 있습니다. 이러한 윤리적 판단을 인간이 아닌 AI에게 맡길 수 있는지에 대해 찬반 양 측의 입장을 고려하여 본인의 견해를 설명하시오."
+        
+        if selected_dept in humanities:
+            st.caption("📌 인문사회계열(아래 3문항 중 1문항 출제)")
+            st.write(q1)
+            st.write("**2.** 최근 '워라밸(Work-Life Balance)' 중시 문화가 확산되면서, 주 4일 근무제 도입을 지지하는 주장과 기업 경쟁력 약화 및 생산성 저하를 우려하는 반론이 공존하고 있습니다. 주 4일 근무제가 우리 사회에 미칠 영향을 긍정적·부정적 측면에서 분석하고, 본인의 견해를 설명하시오.")
+            st.write("**3.** 최근 전쟁과 국제 갈등으로 인해 석유와 가스 가격이 크게 오르면서 전기요금과 물가도 함께 상승하고 있습니다. 이런 상황이 계속되면 국민들의 생활 부담이 커지고 기업 활동에도 어려움이 생길 수 있습니다. 이러한 문제를 해결하기 위해 정부가 가장 먼저 해야 할 일은 무엇이라고 생각하는지 본인의 견해를 설명하시오.")
+        elif selected_dept in sciences:
+            st.caption("📌 자연공학계열(아래 3문항 중 1문항 출제)")
+            st.write(q1)
+            st.write("**2.** 최근 태양광·풍력 등 신재생에너지 비중이 빠르게 증가하고 있지만, 전력의 안정적 공급에는 한계가 있다는 지적도 있습니다. 이러한 한계의 원인과 이를 극복하기 위한 기술적 해결방안을 설명해 보세요.")
+            st.write("**3.** 현실 세계를 가상 공간에 똑같이 구현하는 '디지털 트윈(Digital Twin)' 기술이 도시, 공장, 의료 등 다양한 분야에 적용되고 있습니다. 디지털 트윈이 어떤 원리로 작동하며, 이 기술이 가져올 수 있는 사회적 변화 또는 한계를 설명해 보세요.")
+        elif selected_dept in undecided:
+            st.caption("📌 자율전공학부(아래 3문항 중 1문항 출제)")
+            st.write(q1)
+            st.write("**2.** 최근 '워라밸(Work-Life Balance)' 중시 문화가 확산되면서, 주 4일 근무제 도입을 지지하는 주장과 기업 경쟁력 약화 및 생산성 저하를 우려하는 반론이 공존하고 있습니다. 주 4일 근무제가 우리 사회에 미칠 영향을 긍정적·부정적 측면에서 분석하고, 본인의 견해를 설명하시오.")
+            st.write("**3.** 최근 태양광·풍력 등 신재생에너지 비중이 빠르게 증가하고 있지만, 전력의 안정적 공급에는 한계가 있다는 지적도 있습니다. 이러한 한계의 원인과 이를 극복하기 위한 기술적 해결방안을 설명해 보세요.")
+        else:
+            st.warning("선택하신 학과의 계열 정보가 매핑되지 않았습니다. 대학별 고사 안내서를 확인해주세요.")
+        
+        st.write("---")
+        st.write("**4. 지정문항 :** 우리학과에 지원한 동기가 무엇인가요?")
+
+# --- 4. 학생부 성적 입력 UI ---
+st.write("---")
+st.subheader("📝 학생부 성적 입력")
+
+def get_empty_df():
+    return pd.DataFrame([{"과목명": None, "이수단위": "", "등급/성취도": ""} for _ in range(15)])
+
+col_config = {
+    "과목명": st.column_config.SelectboxColumn(
+        "과목명",
+        options=["국어", "영어", "수학", "사회", "한국사", "과학"],
+        required=False
+    )
+}
+
+col1, col2, col3 = st.columns(3)
+with col1:
+    st.markdown('<div class="grade-title-panel">🌱 1학년 성적</div>', unsafe_allow_html=True)
+    df_1 = st.data_editor(get_empty_df(), column_config=col_config, num_rows="dynamic", key="df1", use_container_width=True)
+with col2:
+    st.markdown('<div class="grade-title-panel">🌿 2학년 성적</div>', unsafe_allow_html=True)
+    df_2 = st.data_editor(get_empty_df(), column_config=col_config, num_rows="dynamic", key="df2", use_container_width=True)
+with col3:
+    st.markdown('<div class="grade-title-panel">🌳 3학년 성적</div>', unsafe_allow_html=True)
+    df_3 = st.data_editor(get_empty_df(), column_config=col_config, num_rows="dynamic", key="df3", use_container_width=True)
+
+# --- 5. 스마트 산출 엔진 ---
+def calculate_score(df_list):
+    gen_u, gen_g = [], []
+    car_u, car_g = [], []
+
+    for df in df_list:
+        for _, row in df.iterrows():
+            unit_raw = row["이수단위"]
+            grade_str = str(row["등급/성취도"]).strip().upper()
+
+            try: unit = float(unit_raw)
+            except: unit = 0.0
+
+            if unit == 0.0 and grade_str not in ["", "NAN", "NONE"]:
+                unit = 1.0
+
+            if unit > 0 and grade_str not in ["", "NAN", "NONE"]:
+                if grade_str.isnumeric() or grade_str.replace(".", "", 1).isdigit():
+                    grade = float(grade_str)
+                    if 1 <= grade <= 9:
+                        gen_u.append(unit)
+                        gen_g.append(grade)
+                else:
+                    grade_map = {"A": 1.0, "B": 2.0, "C": 4.0}
+                    if grade_str in grade_map:
+                        grade = grade_map[grade_str]
+                        car_u.append(unit)
+                        car_g.append(grade)
+
+    df_car = pd.DataFrame({"unit": car_u, "grade": car_g})
+    df_car = df_car.sort_values(by=["grade", "unit"], ascending=[True, False]).head(8)
+
+    df_gen = pd.DataFrame({"unit": gen_u, "grade": gen_g})
+    df_pool = pd.concat([df_gen, df_car], ignore_index=True)
+    df_pool = df_pool.sort_values(by=["grade", "unit"], ascending=[True, False]).head(18)
+
+    actual_count = len(df_pool)
+    sum_unit = df_pool["unit"].sum()
+    sum_grade_unit = (df_pool["unit"] * df_pool["grade"]).sum()
+
+    if actual_count < 18:
+        missing = 18 - actual_count
+        sum_unit += missing * 1.0
+        sum_grade_unit += missing * 1.0 * 9.0
+
+    final_score = round(sum_grade_unit / sum_unit, 2) if sum_unit > 0 else 0.0
+    return final_score, actual_count
+
+# --- 6. 결과 출력 패널 ---
+st.write("---")
+
+col_left, col_right = st.columns([6, 4])
+
+with col_left:
+    with st.container(border=True):
+        st.markdown("### 🎯 성적 산출")
+        
+        col_btn, col_metric = st.columns(2)
+        with col_btn:
+            calc_clicked = st.button("성적 산출", use_container_width=True, type="primary")
+            manual_score = st.number_input("직접 입력(선택)", min_value=0.0, max_value=9.0, value=0.0, step=0.01)
+            
+        if calc_clicked or manual_score > 0:
+            if calc_clicked:
+                current_total_consultations = increase_consulting_count()
+                
+            calc_score, subj_count = calculate_score([df_1, df_2, df_3])
+            final_score = manual_score if manual_score > 0 else calc_score
+            
+            with col_metric:
+                st.metric(label="대진대 환산 등급", value=f"{final_score:.2f} 등급", delta=f"반영과목: {subj_count}개", delta_color="off")
+    
+            st.write("---")
+            st.markdown(f"#### 🏫 **[{selected_dept}] 입시 결과**")
+            
+            if selected_dept == "데이터 로딩 실패" or selected_dept == "데이터 없음":
+                st.error("엑셀 파일 로딩 오류로 비교가 불가능합니다.")
+            else:
+                dept_data = db[selected_track][db[selected_track]["모집단위"] == selected_dept]
+                
+                def get_val(col_keywords):
+                    for col in dept_data.columns:
+                        if all(kw in str(col).replace(" ", "") for kw in col_keywords):
+                            val = dept_data.iloc[0][col]
+                            return val if pd.notna(val) else "-"
+                    return "-"
+    
+                def format_num(val):
+                    if val == "-": return val
+                    try:
+                        f_val = float(val)
+                        if f_val.is_integer(): return str(int(f_val))
+                        return f"{f_val:.2f}"
+                    except: return str(val)
+    
+                mojib_2027 = format_num(get_val(["2027", "모집인원"]))
+                hwansan_avg = format_num(get_val(["2027", "환산", "평균"]))
+                hwansan_cut = format_num(get_val(["2027", "환산", "최저"]))
+                hwansan_max = format_num(get_val(["2027", "환산", "최고"]))
+    
+                def get_year_data(year_full, year_short):
+                    avg = get_val([year_full, "최종합격", "평균"])
+                    if avg == "-": avg = get_val([year_full, "평균"])
+                    if avg == "-": avg = get_val([year_short, "평균"])
+                    
+                    cut = get_val([year_full, "최종합격", "최저"])
+                    if cut == "-": cut = get_val([year_full, "최저"])
+                    if cut == "-": cut = get_val([year_short, "최저"])
+                    
+                    max_v = get_val([year_full, "최종합격", "최고"])
+                    if max_v == "-": max_v = get_val([year_full, "최고"])
+                    if max_v == "-": max_v = get_val([year_short, "최고"])
+                    
+                    chu = get_val([year_full, "추가합격"])
+                    if chu == "-": chu = get_val([year_short, "추가합격"])
+                    comp = get_val([year_full, "경쟁률"])
+                    if comp == "-": comp = get_val([year_short, "경쟁률"])
+                    return avg, cut, max_v, chu, comp
+    
+                avg_26, cut_26, max_26, chu_26, comp_26 = [format_num(x) for x in get_year_data("2026", "26")]
+                avg_25, cut_25, max_25, chu_25, comp_25 = [format_num(x) for x in get_year_data("2025", "25")]
+                avg_24, cut_24, max_24, chu_24, comp_24 = [format_num(x) for x in get_year_data("2024", "24")]
+    
+                if mojib_2027 != "-":
+                    st.info(f"🎓 **2027학년도 모집인원:** {mojib_2027}명")
+    
+                if hwansan_avg != "-" and hwansan_cut != "-":
+                    st.markdown(f"""
+                    <div style="background-color: #edf4fe; padding: 16px 20px; border-left: 5px solid #00308F; border-radius: 6px; margin: 14px 0;">
+                        <div style="font-size: 18px; font-weight: bold; color: #00308F; margin-bottom: 8px;">💡 2027학년도 산출 방식 적용 환산 점수 (예측 기준)</div>
+                        <div style="font-size: 16px; color: #333333; font-weight: bold;">
+                            ▶ 평균: <span style="color: #ff4b4b; font-weight: bold; font-size: 22px;">{hwansan_avg}</span> 등급 &nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp; 
+                            최저: <span style="color: #ff4b4b; font-weight: bold; font-size: 22px;">{hwansan_cut}</span> 등급 &nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp; 
+                            최고: <span style="color: #ff4b4b; font-weight: bold; font-size: 22px;">{hwansan_max}</span> 등급
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    pred_avg, pred_cut, pred_max = hwansan_avg, hwansan_cut, hwansan_max
+                else:
+                    st.markdown(f"""
+                    <div style="background-color: #fff1f1; padding: 16px 20px; border-left: 5px solid #ff4b4b; border-radius: 6px; margin: 14px 0;">
+                        <div style="font-size: 16px; font-weight: bold; color: #d62728;">💡 해당 전형은 별도 환산점수가 없으므로, 2026학년도 결과를 기준으로 예측합니다.</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    pred_avg, pred_cut, pred_max = avg_26, cut_26, max_26
+    
+                st.markdown("📊 **최근 3개년 입시 결과 요약표**")
+                summary_df = pd.DataFrame({
+                    "연도": ["2026학년도", "2025학년도", "2024학년도"],
+                    "경쟁률": [f"{comp_26}:1" if str(comp_26) != "-" else "-", f"{comp_25}:1" if str(comp_25) != "-" else "-", f"{comp_24}:1" if str(comp_24) != "-" else "-"],
+                    "평균등급": [avg_26, avg_25, avg_24],
+                    "최저": [cut_26, cut_25, cut_24],
+                    "최고등급": [max_26, max_25, max_24],
+                    "추가합격": [f"{chu_26}명" if str(chu_26) != "-" else "-", f"{chu_25}명" if str(chu_25) != "-" else "-", f"{chu_24}명" if str(chu_24) != "-" else "-"]
+                }).set_index("연도")
+                
+                st.dataframe(summary_df.style.set_properties(**{'text-align': 'center'}), use_container_width=True)
+    
+                if str(pred_avg) != "-" and str(pred_cut) != "-" and str(pred_max) != "-":
+                    try:
+                        score_avg, score_cut, score_max = float(pred_avg), float(pred_cut), float(pred_max)
+                        if final_score <= score_max: st.success("✅ **안정권:** 기준 최고점보다 성적이 우수합니다.")
+                        elif final_score <= score_avg: st.info("🔄 **적정권:** 기준 평균점보다 성적이 우수합니다.")
+                        elif final_score <= score_cut: st.warning("⚠️ **소신지원:** 기준 평균점과 최저(커트라인) 사이입니다.")
+                        else: st.error("🚨 **상향:** 기준 최저(커트라인)보다 성적이 낮습니다.")
+                    except: st.warning("점수 비교 중 오류가 발생했습니다. (데이터 형식 확인 필요)")
+                else: st.warning("예측 기준이 되는 데이터(최고, 평균, 최저)를 찾을 수 없습니다.")
+
+            # --- 지원 전형 내 타 학과 추천 (Intra-track Recommendation) ---
+            st.write("---")
+            with st.expander(f"🔄 [{selected_track}] 지원 가능 타 학과 추천", expanded=False):
+                st.markdown(f"현재 산출된 환산 점수로 **{selected_track}** 내에서 지원 시 **안정권(최고점 이내)** 또는 **적정권(평균점 이내)**으로 분석되는 타 학과 리스트입니다.")
+                
+                rec_data = []
+                t_name = selected_track
+                if t_name in db and not db[t_name].empty and "모집단위" in db[t_name].columns:
+                    t_df = db[t_name]
+                    for d_name in dept_list:
+                        if d_name == selected_dept: continue
+                        d_data = t_df[t_df["모집단위"] == d_name]
+                        if d_data.empty: continue
+                        
+                        def _get_rec(keywords):
+                            for col in d_data.columns:
+                                if all(kw in str(col).replace(" ", "") for kw in keywords):
+                                    v = d_data.iloc[0][col]
+                                    return v if pd.notna(v) else "-"
+                            return "-"
+                            
+                        avg_27 = _get_rec(["2027", "환산", "평균"])
+                        max_27 = _get_rec(["2027", "환산", "최고"])
+                        
+                        p_avg, p_max = "-", "-"
+                        if avg_27 != "-" and max_27 != "-": p_avg, p_max = avg_27, max_27
+                        else:
+                            avg_26 = _get_rec(["2026", "최종합격", "평균"])
+                            if avg_26 == "-": avg_26 = _get_rec(["2026", "평균"])
+                            if avg_26 == "-": avg_26 = _get_rec(["26", "평균"])
+                            max_26 = _get_rec(["2026", "최종합격", "최고"])
+                            if max_26 == "-": max_26 = _get_rec(["2026", "최고"])
+                            if max_26 == "-": max_26 = _get_rec(["26", "최고"])
+                            p_avg, p_max = avg_26, max_26
+                            
+                        if p_avg != "-" and p_max != "-":
+                            try:
+                                f_avg, f_max = float(p_avg), float(p_max)
+                                status = ""
+                                if final_score <= f_max: status = "✅ 안정권"
+                                elif final_score <= f_avg: status = "🔄 적정권"
+                                if status:
+                                    rec_data.append({
+                                        "모집단위 (추천 학과)": d_name,
+                                        "지원 전략": status,
+                                        "기준 평균": f"{f_avg:.2f}",
+                                        "기준 최고": f"{f_max:.2f}"
+                                    })
+                            except: pass
+                
+                if rec_data:
+                    rec_df = pd.DataFrame(rec_data).sort_values(by=["지원 전략", "기준 평균"], ascending=[True, True]).reset_index(drop=True)
+                    rec_df.index = rec_df.index + 1
+                    st.dataframe(rec_df.style.set_properties(**{'text-align': 'center'}), use_container_width=True)
+                else:
+                    st.info(f"현재 점수로 **{selected_track}** 내에서 안정/적정권에 해당하는 타 학과가 없습니다. 소신/상향 지원 전략을 고려해보세요.")
+
+with col_right:
+    if (calc_clicked or manual_score > 0) and selected_dept != "데이터 로딩 실패" and selected_dept != "데이터 없음":
+        import altair as alt
+        with st.container(border=True):
+            st.markdown("### 📊 입시 데이터 추이 분석 시각화")
+            def to_float_for_chart(val):
+                try: return float(val)
+                except: return None
+            
+            grade_chart_data = pd.DataFrame({
+                "연도": ["2024년", "2025년", "2026년"],
+                "최고": [to_float_for_chart(max_24), to_float_for_chart(max_25), to_float_for_chart(max_26)],
+                "평균": [to_float_for_chart(avg_24), to_float_for_chart(avg_25), to_float_for_chart(avg_26)],
+                "최저": [to_float_for_chart(cut_24), to_float_for_chart(cut_25), to_float_for_chart(cut_26)]
+            }).set_index("연도")
+            
+            comp_chart_data = pd.DataFrame({
+                "연도": ["2024년", "2025년", "2026년"],
+                "경쟁률": [to_float_for_chart(comp_24), to_float_for_chart(comp_25), to_float_for_chart(comp_26)]
+            }).set_index("연도")
+            
+            if not grade_chart_data.isna().all().all():
+                st.markdown("📈 **3개년 입결 등급 스펙트럼 차트**")
+                df_grade = grade_chart_data.reset_index()
+                bar = alt.Chart(df_grade).mark_bar(size=45, color='#00308F', opacity=0.55, cornerRadius=4).encode(
+                    x=alt.X('연도:N', title=None, axis=alt.Axis(labelAngle=0, labelFontSize=12, labelFontWeight='bold')),
+                    y=alt.Y('최고:Q', scale=alt.Scale(zero=False, reverse=True), title='등급'), y2='최저:Q',
+                    tooltip=[alt.Tooltip('연도:N'), alt.Tooltip('최고:Q'), alt.Tooltip('평균:Q'), alt.Tooltip('최저:Q')]
+                )
+                tick = alt.Chart(df_grade).mark_tick(color='#ff4b4b', thickness=4.5, size=45).encode(x='연도:N', y='평균:Q')
+                st.altair_chart(alt.layer(bar, tick).properties(height=275), use_container_width=True)
+    
+            if not comp_chart_data.isna().all().all():
+                st.write("---")
+                st.markdown("🔥 **3개년 경쟁률 추이 그래프**")
+                df_comp_long = comp_chart_data.reset_index()
+                df_comp_long['레이블'] = df_comp_long['경쟁률'].apply(lambda x: f"{x:.2f}:1" if pd.notna(x) else "")
+                base = alt.Chart(df_comp_long).encode(
+                    x=alt.X('연도:N', axis=alt.Axis(labelAngle=0, grid=False, labelFontSize=12, labelFontWeight='bold')),
+                    y=alt.Y('경쟁률:Q', scale=alt.Scale(zero=False), axis=alt.Axis(grid=True), title='경쟁률')
+                )
+                area = base.mark_area(color='#ff4b4b', opacity=0.15, interpolate='monotone')
+                line = base.mark_line(color='#ff4b4b', size=4.5, interpolate='monotone')
+                points = base.mark_point(color='#ff4b4b', size=90, filled=True)
+                text = base.mark_text(dy=-18, fontSize=13, fontWeight='bold', color='#000000').encode(text='레이블:N')
+                st.altair_chart(alt.layer(area, line, points, text).properties(height=275), use_container_width=True)
+
+# --- 7. 전체 학과 입시 결과 요약표 (컬러 스타일링 및 하이라이트 적용) ---
+st.write("---")
+st.markdown(f"### 📋 [{selected_track}] 전체 학과 3개년 입결 종합표")
+st.caption("※ 연도별로 색상이 구분되어 있으며, 현재 상담 중인 **선택 학과**는 노란색으로 강조 표시됩니다.")
+
+if db[selected_track].empty or "모집단위" not in db[selected_track].columns:
+    st.warning("데이터가 없어 전체 표를 구성할 수 없습니다.")
+else:
+    all_dept_data = db[selected_track]
+    table_rows = []
+    for dept in dept_list: 
+        d_data = all_dept_data[all_dept_data["모집단위"] == dept]
+        if d_data.empty: continue
+        
+        def get_d_val(col_keywords):
+            for col in d_data.columns:
+                if all(kw in str(col).replace(" ", "") for kw in col_keywords):
+                    v = d_data.iloc[0][col]
+                    return v if pd.notna(v) else "-"
+            return "-"
+        def fmt(val):
+            if val == "-": return val
+            try:
+                f_val = float(val)
+                if f_val.is_integer(): return str(int(f_val))
+                return f"{f_val:.2f}"
+            except: return str(val)
+        def get_yr(y_full, y_short):
+            avg = get_d_val([y_full, "최종합격", "평균"])
+            if avg == "-": avg = get_d_val([y_full, "평균"])
+            if avg == "-": avg = get_d_val([y_short, "평균"])
+            cut = get_d_val([y_full, "최종합격", "최저"])
+            if cut == "-": cut = get_d_val([y_full, "최저"])
+            if cut == "-": cut = get_d_val([y_short, "최저"])
+            mx = get_d_val([y_full, "최종합격", "최고"])
+            if mx == "-": mx = get_d_val([y_full, "최고"])
+            if mx == "-": mx = get_d_val([y_short, "최고"])
+            return fmt(mx), fmt(avg), fmt(cut)
+
+        m26, a26, c26 = get_yr("2026", "26")
+        m25, a25, c25 = get_yr("2025", "25")
+        m24, a24, c24 = get_yr("2024", "24")
+        table_rows.append({
+            "모집단위": dept, "2026 최고": m26, "2026 평균": a26, "2026 최저": c26,
+            "2025 최고": m25, "2025 평균": a25, "2025 최저": c25, "2024 최고": m24, "2024 평균": a24, "2024 최저": c24,
+        })
+
+    if table_rows:
+        all_df = pd.DataFrame(table_rows).set_index("모집단위")
+        def apply_custom_styles(row):
+            styles = []
+            is_selected = (row.name == selected_dept)
+            for col in row.index:
+                if is_selected: styles.append('background-color: #ffeb3b; color: black; font-weight: bold;')
+                elif "2026" in col: styles.append('background-color: rgba(173, 216, 230, 0.25);')
+                elif "2025" in col: styles.append('background-color: rgba(144, 238, 144, 0.25);')
+                elif "2024" in col: styles.append('background-color: rgba(255, 228, 196, 0.35);')
+                else: styles.append('')
+            return styles
+        st.dataframe(all_df.style.apply(apply_custom_styles, axis=1).set_properties(**{'text-align': 'center'}), use_container_width=True)
