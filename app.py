@@ -518,7 +518,7 @@ with col_right:
 # --- 7. 전체 학과 입시 결과 요약표 (컬러 스타일링 및 하이라이트 적용) ---
 st.write("---")
 st.markdown(f"### 📋 [{selected_track}] 전체 학과 3개년 입결 종합표")
-st.caption("※ 연도별로 색상이 구분되어 있으며, 현재 상담 중인 **선택 학과**는 노란색으로 강조 표시됩니다.")
+st.caption("※ 현재 상담 중인 **선택 학과**는 노란색으로 표시됩니다.")
 
 if db[selected_track].empty or "모집단위" not in db[selected_track].columns:
     st.warning("데이터가 없어 전체 표를 구성할 수 없습니다.")
