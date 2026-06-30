@@ -323,9 +323,8 @@ with col_left:
     with st.container(border=True):
         st.markdown("### 🎯 성적 산출")
         
-# 버튼, 점수, 그리고 신호등 배지가 들어갈 3개의 공간으로 나눕니다.
-        col_btn, col_metric, col_badge = st.columns([3, 2, 3]) 
-        
+        # [수정 1] 버튼, 점수, 신호등이 들어갈 3분할 레이아웃 세팅
+        col_btn, col_metric, col_badge = st.columns([3, 2, 3])
         with col_btn:
             calc_clicked = st.button("성적 산출", use_container_width=True, type="primary")
             manual_score = st.number_input("직접 입력(선택)", min_value=0.0, max_value=9.0, value=0.0, step=0.01)
@@ -340,9 +339,9 @@ with col_left:
             with col_metric:
                 st.metric(label="대진대 환산 등급", value=f"{final_score:.2f} 등급", delta=f"반영과목: {subj_count}개", delta_color="off")
             
-            # 🚨 나중에 신호등을 그릴 빈 캔버스(Placeholder)를 미리 세팅합니다.
-            badge_placeholder = col_badge.empty() 
-
+            # [수정 2] 신호등을 그릴 빈 캔버스 예약
+            badge_placeholder = col_badge.empty()
+    
             st.write("---")
             st.markdown(f"#### 🏫 **[{selected_dept}] 입시 결과**")
             
@@ -429,17 +428,16 @@ with col_left:
                 
                 st.dataframe(summary_df.style.set_properties(**{'text-align': 'center'}), use_container_width=True)
     
-if str(pred_avg) != "-" and str(pred_cut) != "-" and str(pred_max) != "-":
+                if str(pred_avg) != "-" and str(pred_cut) != "-" and str(pred_max) != "-":
                     try:
                         score_avg, score_cut, score_max = float(pred_avg), float(pred_cut), float(pred_max)
                         
-                        # 1. 텍스트 결과 출력 (기존 유지)
                         if final_score <= score_max: st.success("✅ **안정권:** 기준 최고점보다 성적이 우수합니다.")
                         elif final_score <= score_avg: st.info("🔄 **적정권:** 기준 평균점보다 성적이 우수합니다.")
                         elif final_score <= score_cut: st.warning("⚠️ **소신지원:** 기준 평균점과 최저(커트라인) 사이입니다.")
                         else: st.error("🚨 **상향:** 기준 최저(커트라인)보다 성적이 낮습니다.")
-
-                        # 2. 🚨 신호등 그래픽 렌더링 (파랑/초록/주황/빨강)
+                        
+                        # [수정 3] 파랑/초록/주황/빨강 신호등 패치 적용
                         bg_color, border_color, icon, status_text, text_color = "", "", "", "", ""
                         
                         if final_score <= score_max:
@@ -462,6 +460,7 @@ if str(pred_avg) != "-" and str(pred_cut) != "-" and str(pred_max) != "-":
                         badge_placeholder.markdown(badge_html, unsafe_allow_html=True)
                         
                     except: st.warning("점수 비교 중 오류가 발생했습니다. (데이터 형식 확인 필요)")
+                else: st.warning("예측 기준이 되는 데이터(최고, 평균, 최저)를 찾을 수 없습니다.")
 
             # --- 지원 전형 내 타 학과 추천 (Intra-track Recommendation) ---
             st.write("---")
@@ -484,7 +483,6 @@ if str(pred_avg) != "-" and str(pred_cut) != "-" and str(pred_max) != "-":
                                     return v if pd.notna(v) else "-"
                             return "-"
                             
-                        # [🚨 핵심 패치 🚨] 변수명 충돌 격리 (rec_ 접두어 사용)
                         rec_avg_27 = _get_rec(["2027", "환산", "평균"])
                         rec_max_27 = _get_rec(["2027", "환산", "최고"])
                         
