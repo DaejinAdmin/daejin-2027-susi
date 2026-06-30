@@ -437,16 +437,20 @@ with col_left:
                         elif final_score <= score_cut: st.warning("⚠️ **소신지원:** 기준 평균점과 최저(커트라인) 사이입니다.")
                         else: st.error("🚨 **상향:** 기준 최저(커트라인)보다 성적이 낮습니다.")
                         
-                        # [수정 3] 파랑/초록/주황/빨강 신호등 패치 적용
+# [수정 3] 상하단 알림창 색상 완벽 동기화 패치
                         bg_color, border_color, icon, status_text, text_color = "", "", "", "", ""
                         
                         if final_score <= score_max:
-                            bg_color, border_color, icon, status_text, text_color = "#e3f2fd", "#2196f3", "🔵", "안 정", "#1565c0"
+                            # [안정] 하단 st.success 완벽 매칭 (초록색)
+                            bg_color, border_color, icon, status_text, text_color = "#e8f5e9", "#4caf50", "🟢", "안 정", "#2e7d32"
                         elif final_score <= score_avg:
-                            bg_color, border_color, icon, status_text, text_color = "#e8f5e9", "#4caf50", "🟢", "적 정", "#2e7d32"
+                            # [적정] 하단 st.info 완벽 매칭 (파란색)
+                            bg_color, border_color, icon, status_text, text_color = "#e3f2fd", "#2196f3", "🔵", "적 정", "#1565c0"
                         elif final_score <= score_cut:
+                            # [소신] 하단 st.warning 완벽 매칭 (주황색)
                             bg_color, border_color, icon, status_text, text_color = "#fff3e0", "#ff9800", "🟠", "소 신", "#ef6c00"
                         else:
+                            # [상향] 하단 st.error 완벽 매칭 (빨간색)
                             bg_color, border_color, icon, status_text, text_color = "#ffebee", "#f44336", "🔴", "상 향", "#c62828"
 
                         badge_html = f"""
