@@ -17,6 +17,14 @@ st.set_page_config(page_title="2027 대진대 수시 입학상담 솔루션", la
 
 st.markdown("""
 <style>
+    /* 🚨 [보안 패치] 우측 상단 햄버거 메뉴 및 하단 스트림릿 워터마크 완벽 숨김 🚨 */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+
+    /* ========================================= */
+    /* 아래부터는 기존 디자인 설정 (절대 지우지 마세요) */
+    /* ========================================= */
     .stApp { background-color: #f7f9fc; }
     h1, h2, h3, h4 { color: #000000 !important; }
     
