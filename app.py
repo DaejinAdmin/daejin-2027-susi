@@ -407,9 +407,9 @@ with col_left:
                             {mojib_badge}
                         </div>
                         <div style="font-size: 16px; color: #333333; font-weight: bold;">
-                            ▶ 평균: <span style="color: #ff4b4b; font-weight: bold; font-size: 22px;">{hwansan_avg}</span> 등급 &nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp; 
-                            최저: <span style="color: #ff4b4b; font-weight: bold; font-size: 22px;">{hwansan_cut}</span> 등급 &nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp; 
-                            최고: <span style="color: #ff4b4b; font-weight: bold; font-size: 22px;">{hwansan_max}</span> 등급
+                            ▶ 평균: <span style="color: #ff4b4b; font-weight: bold; font-size: 24px;">{hwansan_avg}</span> 등급 &nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp; 
+                            최저: <span style="color: #ff4b4b; font-weight: bold; font-size: 24px;">{hwansan_cut}</span> 등급 &nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp; 
+                            최고: <span style="color: #ff4b4b; font-weight: bold; font-size: 24px;">{hwansan_max}</span> 등급
                         </div>
                     </div>
                     """, unsafe_allow_html=True)
