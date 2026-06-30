@@ -263,7 +263,7 @@ with col2:
     st.markdown('<div class="grade-title-panel">🌿 2학년 성적</div>', unsafe_allow_html=True)
     df_2 = st.data_editor(get_empty_df(), column_config=col_config, num_rows="dynamic", key="df2", use_container_width=True)
 with col3:
-    st.markdown('<div class="grade-title-panel">🌳 3학년 성적</div>', unsafe_allow_html=True)
+    st.markdown('<div class="grade-title-panel">🌳 3학년 성적[1학기]</div>', unsafe_allow_html=True)
     df_3 = st.data_editor(get_empty_df(), column_config=col_config, num_rows="dynamic", key="df3", use_container_width=True)
 
 # --- 5. 스마트 산출 엔진 ---
