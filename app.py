@@ -393,13 +393,19 @@ with col_left:
                 avg_25, cut_25, max_25, chu_25, comp_25 = [format_num(x) for x in get_year_data("2025", "25")]
                 avg_24, cut_24, max_24, chu_24, comp_24 = [format_num(x) for x in get_year_data("2024", "24")]
     
-                if mojib_2027 != "-":
-                    st.info(f"🎓 **2027학년도 모집인원:** {mojib_2027}명")
-    
+# ---------------------------------------------------
+                # 여기서부터 복사하세요. (기존 if mojib_2027 != "-": 부분부터 교체)
+                
+                # [디자인 패치] 모집인원을 둥근 배지 모양의 HTML로 묶어둡니다.
+                mojib_badge = f'<div style="font-size: 15px; font-weight: bold; color: #1e3a8a; background-color: #dbeafe; border: 1px solid #bfdbfe; padding: 4px 12px; border-radius: 20px;">🎓 모집인원: {mojib_2027}명</div>' if mojib_2027 != "-" else ""
+                
                 if hwansan_avg != "-" and hwansan_cut != "-":
                     st.markdown(f"""
                     <div style="background-color: #edf4fe; padding: 16px 20px; border-left: 5px solid #00308F; border-radius: 6px; margin: 14px 0;">
-                        <div style="font-size: 18px; font-weight: bold; color: #00308F; margin-bottom: 8px;">💡 2027학년도 산출 방식 적용 환산 점수 (예측 기준)</div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <div style="font-size: 18px; font-weight: bold; color: #00308F;">💡 2027학년도 산출 방식 적용 환산 점수 (예측 기준)</div>
+                            {mojib_badge}
+                        </div>
                         <div style="font-size: 16px; color: #333333; font-weight: bold;">
                             ▶ 평균: <span style="color: #ff4b4b; font-weight: bold; font-size: 22px;">{hwansan_avg}</span> 등급 &nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp; 
                             최저: <span style="color: #ff4b4b; font-weight: bold; font-size: 22px;">{hwansan_cut}</span> 등급 &nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp; 
@@ -411,10 +417,16 @@ with col_left:
                 else:
                     st.markdown(f"""
                     <div style="background-color: #fff1f1; padding: 16px 20px; border-left: 5px solid #ff4b4b; border-radius: 6px; margin: 14px 0;">
-                        <div style="font-size: 16px; font-weight: bold; color: #d62728;">💡 해당 전형은 별도 환산점수가 없으므로, 2026학년도 결과를 기준으로 예측합니다.</div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div style="font-size: 16px; font-weight: bold; color: #d62728;">💡 해당 전형은 별도 환산점수가 없으므로, 2026학년도 결과를 기준으로 예측합니다.</div>
+                            {mojib_badge}
+                        </div>
                     </div>
                     """, unsafe_allow_html=True)
                     pred_avg, pred_cut, pred_max = avg_26, cut_26, max_26
+                    
+                # 여기까지 복사하여 교체합니다.
+                # ---------------------------------------------------
     
                 st.markdown("📊 **최근 3개년 입시 결과 요약표**")
                 summary_df = pd.DataFrame({
