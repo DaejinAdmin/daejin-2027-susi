@@ -403,7 +403,7 @@ with col_left:
                     st.markdown(f"""
                     <div style="background-color: #edf4fe; padding: 16px 20px; border-left: 5px solid #00308F; border-radius: 6px; margin: 14px 0;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                            <div style="font-size: 22px; font-weight: bold; color: #00308F;">💡 2027학년도 산출 방식 적용 환산 점수 (예측 기준)</div>
+                            <div style="font-size: 20px; font-weight: bold; color: #00308F;">💡 2027학년도 산출 방식 적용 환산 점수 (예측 기준)</div>
                             {mojib_badge}
                         </div>
                         <div style="font-size: 16px; color: #333333; font-weight: bold;">
