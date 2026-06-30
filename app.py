@@ -107,7 +107,7 @@ with col_count:
 
 st.markdown("일반/진로 구분 없이 입력 (A/B/C 입력 시 진로과목 인식) | 상위 18과목 반영 (진로 최대 8과목) | 미달 시 9등급 적용")
 
-# --- 2. 스마트 입결 데이터 로드 ---
+# --- 2. 스마트 입시 결과 데이터 로드 ---
 @st.cache_data
 def load_admission_data():
     db = {}
@@ -554,7 +554,7 @@ with col_right:
             }).set_index("연도")
             
             if not df_grade[["최고_렌더", "최저_렌더", "평균"]].isna().all().all():
-                st.markdown("📈 **3개년 입결 등급 스펙트럼 차트**")
+                st.markdown("📈 **3개년 입시 결과 등급 스펙트럼 차트**")
                 
                 bar = alt.Chart(df_grade).mark_bar(size=45, color='#00308F', opacity=0.55, cornerRadius=4).encode(
                     x=alt.X('연도:N', title=None, axis=alt.Axis(labelAngle=0, labelFontSize=12, labelFontWeight='bold')),
@@ -587,7 +587,7 @@ with col_right:
 
 # --- 7. 전체 학과 입시 결과 요약표 ---
 st.write("---")
-st.markdown(f"### 📋 [{selected_track}] 전체 학과 3개년 입결 종합표")
+st.markdown(f"### 📋 [{selected_track}] 전체 학과 3개년 입시 결과 종합표")
 st.caption("※ 현재 상담 중인 **선택 학과**는 노란색으로 표시됩니다.")
 
 if db[selected_track].empty or "모집단위" not in db[selected_track].columns:
