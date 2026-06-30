@@ -397,7 +397,7 @@ with col_left:
                 # 여기서부터 복사하세요. (기존 if mojib_2027 != "-": 부분부터 교체)
                 
                 # [디자인 패치] 모집인원을 둥근 배지 모양의 HTML로 묶어둡니다.
-                mojib_badge = f'<div style="font-size: 15px; font-weight: bold; color: #1e3a8a; background-color: #dbeafe; border: 1px solid #bfdbfe; padding: 4px 12px; border-radius: 20px;">🎓 모집인원: {mojib_2027}명</div>' if mojib_2027 != "-" else ""
+                mojib_badge = f'<div style="font-size: 28px; font-weight: bold; color: #1e3a8a; background-color: #dbeafe; border: 1px solid #bfdbfe; padding: 6px 18px; border-radius: 24px;">🎓 모집인원: {mojib_2027}명</div>' if mojib_2027 != "-" else ""
                 
                 if hwansan_avg != "-" and hwansan_cut != "-":
                     st.markdown(f"""
