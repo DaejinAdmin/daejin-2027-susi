@@ -255,7 +255,7 @@ with col_grade_title:
 
 with col_reset:
     # 다음 학생 상담을 위한 리셋 버튼
-    if st.button("🔄 전체 초기화", use_container_width=True):
+    if st.button("🔄 초기화", use_container_width=True):
         # [핵심 패치 2] 리셋 버튼을 누르면 번호표를 1 올리고 화면을 새로고침합니다.
         st.session_state.reset_key += 1
         st.rerun() 
