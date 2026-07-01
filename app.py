@@ -408,9 +408,6 @@ with col_left:
                 avg_25, cut_25, max_25, chu_25, comp_25 = [format_num(x) for x in get_year_data("2025", "25")]
                 avg_24, cut_24, max_24, chu_24, comp_24 = [format_num(x) for x in get_year_data("2024", "24")]
     
-# ---------------------------------------------------
-                # 여기서부터 복사하세요. (기존 if mojib_2027 != "-": 부분부터 교체)
-                
                 # [디자인 패치] 모집인원을 둥근 배지 모양의 HTML로 묶어둡니다.
                 mojib_badge = f'<div style="font-size: 28px; font-weight: bold; color: #1e3a8a; background-color: #dbeafe; border: 1px solid #bfdbfe; padding: 6px 18px; border-radius: 24px;">🎓 모집인원: {mojib_2027}명</div>' if mojib_2027 != "-" else ""
                 
@@ -440,9 +437,6 @@ with col_left:
                     """, unsafe_allow_html=True)
                     pred_avg, pred_cut, pred_max = avg_26, cut_26, max_26
                     
-                # 여기까지 복사하여 교체합니다.
-                # ---------------------------------------------------
-    
                 st.markdown("📊 **최근 3개년 입시 결과 요약표**")
                 summary_df = pd.DataFrame({
                     "연도": ["2026학년도", "2025학년도", "2024학년도"],
@@ -464,20 +458,16 @@ with col_left:
                         elif final_score <= score_cut: st.warning("⚠️ **소신지원:** 기준 평균점과 최저(커트라인) 사이입니다.")
                         else: st.error("🚨 **상향:** 기준 최저(커트라인)보다 성적이 낮습니다.")
                         
-# [수정 3] 상하단 알림창 색상 완벽 동기화 패치
+                        # [수정 3] 상하단 알림창 색상 완벽 동기화 패치
                         bg_color, border_color, icon, status_text, text_color = "", "", "", "", ""
                         
                         if final_score <= score_max:
-                            # [안정] 하단 st.success 완벽 매칭 (초록색)
                             bg_color, border_color, icon, status_text, text_color = "#e8f5e9", "#4caf50", "🟢", "안 정", "#2e7d32"
                         elif final_score <= score_avg:
-                            # [적정] 하단 st.info 완벽 매칭 (파란색)
                             bg_color, border_color, icon, status_text, text_color = "#e3f2fd", "#2196f3", "🔵", "적 정", "#1565c0"
                         elif final_score <= score_cut:
-                            # [소신] 하단 st.warning 완벽 매칭 (주황색)
                             bg_color, border_color, icon, status_text, text_color = "#fff3e0", "#ff9800", "🟠", "소 신", "#ef6c00"
                         else:
-                            # [상향] 하단 st.error 완벽 매칭 (빨간색)
                             bg_color, border_color, icon, status_text, text_color = "#ffebee", "#f44336", "🔴", "상 향", "#c62828"
 
                         badge_html = f"""
@@ -650,7 +640,7 @@ with col_right:
                 points = base.mark_point(color='#ff4b4b', size=90, filled=True)
                 text = base.mark_text(dy=-18, fontSize=13, fontWeight='bold', color='#000000').encode(text='레이블:N')
                 st.altair_chart(alt.layer(area, line, points, text).properties(height=275), use_container_width=True)
-
+                
 # --- 7. 전체 학과 입시 결과 요약표 ---
 st.write("---")
 st.markdown(f"### 📋 [{selected_track}] 전체 학과 3개년 입시 결과 종합표")
