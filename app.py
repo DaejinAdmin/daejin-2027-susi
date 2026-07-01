@@ -243,7 +243,11 @@ if selected_track == "학생부우수자" and selected_dept != "데이터 로딩
 # --- 4. 학생부 성적 입력 UI ---
 st.write("---")
 
-# [패치] 제목과 초기화 버튼을 좌우로 배치하기 위해 컬럼 분할 (비율 8.5 : 1.5)
+# [핵심 패치 1] 초기화 번호표(카운터)를 만듭니다.
+if "reset_key" not in st.session_state:
+    st.session_state.reset_key = 0
+
+# 제목과 초기화 버튼을 좌우로 배치하기 위해 컬럼 분할 (비율 8.5 : 1.5)
 col_grade_title, col_reset = st.columns([8.5, 1.5])
 
 with col_grade_title:
@@ -251,12 +255,9 @@ with col_grade_title:
 
 with col_reset:
     # 다음 학생 상담을 위한 리셋 버튼
-    if st.button("🔄 초기화", use_container_width=True):
-        # 내부 세션 상태(메모리)에 저장된 성적 데이터를 강제로 삭제합니다.
-        for key in ["df1", "df2", "df3"]:
-            if key in st.session_state:
-                del st.session_state[key]
-        # 화면을 즉시 새로고침하여 빈칸으로 렌더링합니다.
+    if st.button("🔄 전체 초기화", use_container_width=True):
+        # [핵심 패치 2] 리셋 버튼을 누르면 번호표를 1 올리고 화면을 새로고침합니다.
+        st.session_state.reset_key += 1
         st.rerun() 
 
 def get_empty_df():
@@ -273,13 +274,14 @@ col_config = {
 col1, col2, col3 = st.columns(3)
 with col1:
     st.markdown('<div class="grade-title-panel">🌱 1학년 성적</div>', unsafe_allow_html=True)
-    df_1 = st.data_editor(get_empty_df(), column_config=col_config, num_rows="dynamic", key="df1", use_container_width=True)
+    # [핵심 패치 3] key 이름표에 번호표(reset_key)를 붙여 계속 새로운 표로 인식하게 만듭니다.
+    df_1 = st.data_editor(get_empty_df(), column_config=col_config, num_rows="dynamic", key=f"df1_{st.session_state.reset_key}", use_container_width=True)
 with col2:
     st.markdown('<div class="grade-title-panel">🌿 2학년 성적</div>', unsafe_allow_html=True)
-    df_2 = st.data_editor(get_empty_df(), column_config=col_config, num_rows="dynamic", key="df2", use_container_width=True)
+    df_2 = st.data_editor(get_empty_df(), column_config=col_config, num_rows="dynamic", key=f"df2_{st.session_state.reset_key}", use_container_width=True)
 with col3:
     st.markdown('<div class="grade-title-panel">🌳 3학년[1학기] 성적</div>', unsafe_allow_html=True)
-    df_3 = st.data_editor(get_empty_df(), column_config=col_config, num_rows="dynamic", key="df3", use_container_width=True)
+    df_3 = st.data_editor(get_empty_df(), column_config=col_config, num_rows="dynamic", key=f"df3_{st.session_state.reset_key}", use_container_width=True)
 
 # --- 5. 스마트 산출 엔진 ---
 def calculate_score(df_list):
