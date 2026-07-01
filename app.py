@@ -611,12 +611,14 @@ with col_right:
                 "경쟁률": [safe_float(comp_24), safe_float(comp_25), safe_float(comp_26)]
             }).set_index("연도")
             
-            if not df_grade[["최고_렌더", "최저_렌더", "평균"]].isna().all().all():
+if not df_grade[["최고_렌더", "최저_렌더", "평균"]].isna().all().all():
                 st.markdown("📈 **3개년 입시 결과 등급 스펙트럼 차트**")
                 
+                # [수정] Y축 '등급' 글자 똑바로 세우기 (titleAngle=0)
                 bar = alt.Chart(df_grade).mark_bar(size=45, color='#00308F', opacity=0.55, cornerRadius=4).encode(
                     x=alt.X('연도:N', title=None, axis=alt.Axis(labelAngle=0, labelFontSize=12, labelFontWeight='bold')),
-                    y=alt.Y('최고_렌더:Q', scale=alt.Scale(zero=False, reverse=True), title='등급'), 
+                    y=alt.Y('최고_렌더:Q', scale=alt.Scale(zero=False, reverse=True), 
+                            axis=alt.Axis(title='등급', titleAngle=0, titlePadding=20, titleAlign='right')), 
                     y2='최저_렌더:Q',
                     tooltip=[
                         alt.Tooltip('연도:N'), 
@@ -626,21 +628,38 @@ with col_right:
                     ]
                 )
                 tick = alt.Chart(df_grade).mark_tick(color='#ff4b4b', thickness=4.5, size=45).encode(x='연도:N', y='평균:Q')
-                st.altair_chart(alt.layer(bar, tick).properties(height=275), use_container_width=True)
+                
+                # [추가] 최고 / 평균 / 최저 수치 텍스트 마커 생성
+                text_max = alt.Chart(df_grade).mark_text(dy=-15, fontSize=12, fontWeight='bold', color='#00308F').encode(
+                    x='연도:N', y='최고_렌더:Q', text='최고등급:N'
+                )
+                text_avg = alt.Chart(df_grade).mark_text(dx=35, fontSize=12, fontWeight='bold', color='#ff4b4b').encode(
+                    x='연도:N', y='평균:Q', text='평균등급:N'
+                )
+                text_min = alt.Chart(df_grade).mark_text(dy=15, fontSize=12, fontWeight='bold', color='#00308F').encode(
+                    x='연도:N', y='최저_렌더:Q', text='최저등급:N'
+                )
+
+                # [수정] bar, tick과 함께 3개의 텍스트(text_max, text_avg, text_min)를 한 겹으로 겹쳐서 출력
+                st.altair_chart(alt.layer(bar, tick, text_max, text_avg, text_min).properties(height=275), use_container_width=True)
     
             if not comp_chart_data.isna().all().all():
                 st.write("---")
                 st.markdown("🔥 **3개년 경쟁률 추이 그래프**")
                 df_comp_long = comp_chart_data.reset_index()
                 df_comp_long['레이블'] = df_comp_long['경쟁률'].apply(lambda x: f"{x:.2f}:1" if pd.notna(x) else "")
+                
+                # [수정] Y축 '경쟁률' 글자 똑바로 세우기 (titleAngle=0)
                 base = alt.Chart(df_comp_long).encode(
                     x=alt.X('연도:N', axis=alt.Axis(labelAngle=0, grid=False, labelFontSize=12, labelFontWeight='bold')),
-                    y=alt.Y('경쟁률:Q', scale=alt.Scale(zero=False), axis=alt.Axis(grid=True), title='경쟁률')
+                    y=alt.Y('경쟁률:Q', scale=alt.Scale(zero=False), 
+                            axis=alt.Axis(title='경쟁률', grid=True, titleAngle=0, titlePadding=20, titleAlign='right'))
                 )
                 area = base.mark_area(color='#ff4b4b', opacity=0.15, interpolate='monotone')
                 line = base.mark_line(color='#ff4b4b', size=4.5, interpolate='monotone')
                 points = base.mark_point(color='#ff4b4b', size=90, filled=True)
                 text = base.mark_text(dy=-18, fontSize=13, fontWeight='bold', color='#000000').encode(text='레이블:N')
+                
                 st.altair_chart(alt.layer(area, line, points, text).properties(height=275), use_container_width=True)
                 
 # --- 7. 전체 학과 입시 결과 요약표 ---
