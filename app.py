@@ -643,7 +643,7 @@ if not df_grade[["최고_렌더", "최저_렌더", "평균"]].isna().all().all()
                 # [수정] bar, tick과 함께 3개의 텍스트(text_max, text_avg, text_min)를 한 겹으로 겹쳐서 출력
                 st.altair_chart(alt.layer(bar, tick, text_max, text_avg, text_min).properties(height=275), use_container_width=True)
     
-            if not comp_chart_data.isna().all().all():
+if not comp_chart_data.isna().all().all():
                 st.write("---")
                 st.markdown("🔥 **3개년 경쟁률 추이 그래프**")
                 df_comp_long = comp_chart_data.reset_index()
