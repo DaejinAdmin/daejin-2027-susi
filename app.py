@@ -640,22 +640,46 @@ with col_right:
 
                 st.altair_chart(alt.layer(bar, tick, text_max, text_avg, text_min).properties(height=275), use_container_width=True)
     
-            # [3] 두 번째 차트 렌더링
+# [3] 두 번째 차트 렌더링 (세련된 모던 UI 적용)
             if not comp_chart_data.isna().all().all():
                 st.write("---")
                 st.markdown("🔥 **3개년 경쟁률 추이 그래프**")
                 df_comp_long = comp_chart_data.reset_index()
                 df_comp_long['레이블'] = df_comp_long['경쟁률'].apply(lambda x: f"{x:.2f}:1" if pd.notna(x) else "")
                 
+                # ① Y축 그리드를 연한 점선으로 세팅하여 세련미 추가 & 불필요한 테두리 제거
                 base = alt.Chart(df_comp_long).encode(
-                    x=alt.X('연도:N', axis=alt.Axis(labelAngle=0, grid=False, labelFontSize=12, labelFontWeight='bold')),
-                    y=alt.Y('경쟁률:Q', scale=alt.Scale(zero=False), 
-                            axis=alt.Axis(title='경쟁률', grid=True, titleAngle=0, titlePadding=20, titleAlign='right'))
+                    x=alt.X('연도:N', axis=alt.Axis(
+                        labelAngle=0, grid=False, labelFontSize=12, labelFontWeight='bold', 
+                        domainColor='#cbd5e1', tickColor='#cbd5e1'
+                    )),
+                    y=alt.Y('경쟁률:Q', scale=alt.Scale(zero=False), axis=alt.Axis(
+                        title='경쟁률', grid=True, gridDash=[5, 5], gridColor='#e2e8f0', 
+                        titleAngle=0, titlePadding=20, titleAlign='right', 
+                        domain=False, ticks=False
+                    ))
                 )
-                area = base.mark_area(color='#ff4b4b', opacity=0.15, interpolate='monotone')
-                line = base.mark_line(color='#ff4b4b', size=4.5, interpolate='monotone')
-                points = base.mark_point(color='#ff4b4b', size=90, filled=True)
-                text = base.mark_text(dy=-18, fontSize=13, fontWeight='bold', color='#000000').encode(text='레이블:N')
+                
+                # ② 그라데이션 영역 (위는 진하게, 아래는 흰색으로 자연스럽게 페이드아웃)
+                area = base.mark_area(
+                    color=alt.Gradient(
+                        gradient='linear',
+                        stops=[alt.GradientStop(color='#ff4b4b', offset=0),
+                               alt.GradientStop(color='white', offset=1)],
+                        x1=1, x2=1, y1=1, y2=0
+                    ),
+                    opacity=0.6, 
+                    interpolate='monotone'
+                )
+                
+                # ③ 선 굵기를 정돈하여 샤프하게 유지
+                line = base.mark_line(color='#ff4b4b', size=3.5, interpolate='monotone')
+                
+                # ④ 모던 UI 스타일 포인트 (테두리는 붉은색, 내부는 흰색으로 타공)
+                points = base.mark_point(color='#ff4b4b', size=140, fill='white', strokeWidth=3, opacity=1)
+                
+                # ⑤ 텍스트 가독성 조정 (완전 블랙이 아닌 짙은 그레이로 눈을 편안하게)
+                text = base.mark_text(dy=-22, fontSize=13, fontWeight='bold', color='#334155').encode(text='레이블:N')
                 
                 st.altair_chart(alt.layer(area, line, points, text).properties(height=275), use_container_width=True)
                 
