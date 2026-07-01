@@ -251,7 +251,7 @@ with col_grade_title:
 
 with col_reset:
     # 다음 학생 상담을 위한 리셋 버튼
-    if st.button("🔄 전체 초기화", use_container_width=True):
+    if st.button("🔄 초기화", use_container_width=True):
         # 내부 세션 상태(메모리)에 저장된 성적 데이터를 강제로 삭제합니다.
         for key in ["df1", "df2", "df3"]:
             if key in st.session_state:
