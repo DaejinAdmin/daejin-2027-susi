@@ -596,6 +596,7 @@ with col_right:
             m25_r, c25_r = get_render_bounds(m25_f, c25_f)
             m26_r, c26_r = get_render_bounds(m26_f, c26_f)
 
+# [1] 데이터프레임 선언부 (이 부분이 지워졌을 확률이 높습니다. 복구 완료)
             df_grade = pd.DataFrame({
                 "연도": ["2024년", "2025년", "2026년"],
                 "최고_렌더": [m24_r, m25_r, m26_r],
@@ -610,26 +611,23 @@ with col_right:
                 "연도": ["2024년", "2025년", "2026년"],
                 "경쟁률": [safe_float(comp_24), safe_float(comp_25), safe_float(comp_26)]
             }).set_index("연도")
-            
-if not df_grade[["최고_렌더", "최저_렌더", "평균"]].isna().all().all():
+
+            # [2] 첫 번째 차트 렌더링 (글자 세우기 + 수치 고정 패치 적용)
+            if not df_grade[["최고_렌더", "최저_렌더", "평균"]].isna().all().all():
                 st.markdown("📈 **3개년 입시 결과 등급 스펙트럼 차트**")
                 
-                # [수정] Y축 '등급' 글자 똑바로 세우기 (titleAngle=0)
                 bar = alt.Chart(df_grade).mark_bar(size=45, color='#00308F', opacity=0.55, cornerRadius=4).encode(
                     x=alt.X('연도:N', title=None, axis=alt.Axis(labelAngle=0, labelFontSize=12, labelFontWeight='bold')),
                     y=alt.Y('최고_렌더:Q', scale=alt.Scale(zero=False, reverse=True), 
                             axis=alt.Axis(title='등급', titleAngle=0, titlePadding=20, titleAlign='right')), 
                     y2='최저_렌더:Q',
                     tooltip=[
-                        alt.Tooltip('연도:N'), 
-                        alt.Tooltip('최고등급:N'), 
-                        alt.Tooltip('평균등급:N'), 
-                        alt.Tooltip('최저등급:N')
+                        alt.Tooltip('연도:N'), alt.Tooltip('최고등급:N'), 
+                        alt.Tooltip('평균등급:N'), alt.Tooltip('최저등급:N')
                     ]
                 )
                 tick = alt.Chart(df_grade).mark_tick(color='#ff4b4b', thickness=4.5, size=45).encode(x='연도:N', y='평균:Q')
                 
-                # [추가] 최고 / 평균 / 최저 수치 텍스트 마커 생성
                 text_max = alt.Chart(df_grade).mark_text(dy=-15, fontSize=12, fontWeight='bold', color='#00308F').encode(
                     x='연도:N', y='최고_렌더:Q', text='최고등급:N'
                 )
@@ -640,16 +638,15 @@ if not df_grade[["최고_렌더", "최저_렌더", "평균"]].isna().all().all()
                     x='연도:N', y='최저_렌더:Q', text='최저등급:N'
                 )
 
-                # [수정] bar, tick과 함께 3개의 텍스트(text_max, text_avg, text_min)를 한 겹으로 겹쳐서 출력
                 st.altair_chart(alt.layer(bar, tick, text_max, text_avg, text_min).properties(height=275), use_container_width=True)
     
-if not comp_chart_data.isna().all().all():
+            # [3] 두 번째 차트 렌더링
+            if not comp_chart_data.isna().all().all():
                 st.write("---")
                 st.markdown("🔥 **3개년 경쟁률 추이 그래프**")
                 df_comp_long = comp_chart_data.reset_index()
                 df_comp_long['레이블'] = df_comp_long['경쟁률'].apply(lambda x: f"{x:.2f}:1" if pd.notna(x) else "")
                 
-                # [수정] Y축 '경쟁률' 글자 똑바로 세우기 (titleAngle=0)
                 base = alt.Chart(df_comp_long).encode(
                     x=alt.X('연도:N', axis=alt.Axis(labelAngle=0, grid=False, labelFontSize=12, labelFontWeight='bold')),
                     y=alt.Y('경쟁률:Q', scale=alt.Scale(zero=False), 
