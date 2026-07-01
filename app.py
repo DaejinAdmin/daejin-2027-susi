@@ -549,7 +549,7 @@ with col_right:
         import altair as alt
         
         with st.container(border=True):
-            st.markdown("### 📊 입시 결과 추이 분석 시각화")
+            st.markdown("### 📊 입시 결과 추이 분석")
             
             def safe_float(val):
                 try:
