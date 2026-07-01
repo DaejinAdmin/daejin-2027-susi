@@ -113,8 +113,7 @@ with col_count:
         if st.session_state.show_counter:
             st.metric(label="수시 상담 누적 건수", value=f"{current_total_consultations} 건")
 
-# [새로 넣을 코드] 방금 지운 줄 자리에 이 한 줄을 넣습니다.
-guidance_placeholder = st.empty()
+st.markdown("일반/진로 구분 없이 입력 (A/B/C 입력 시 진로과목 인식) | 상위 18과목 반영 (진로 최대 8과목) | 미달 시 9등급 적용")
 
 # --- 2. 스마트 입시 결과 데이터 로드 ---
 @st.cache_data
@@ -182,22 +181,6 @@ col_sel1, col_sel2 = st.columns(2)
 with col_sel1:
     track_list = ["학생부우수자", "윈윈대진", "학교장추천"]
     selected_track = st.selectbox("전형 선택", track_list)
-    # [여기에 복사/붙여넣기] 전형 선택 selectbox 코드 바로 아래에 붙여넣습니다.
-
-if selected_screening in ["학생부우수자", "학교장추천"]:
-    guidance_placeholder.markdown(
-        "<p style='color: #666666; font-size: 14px; margin-bottom: 0;'>"
-        "일반/진로 구분 없이 입력 (A/B/C 입력 시 진로과목 인식) | 상위 18과목 반영 (진로 최대 8과목) | 미달 시 9등급 적용"
-        "</p>", 
-        unsafe_allow_html=True
-    )
-elif selected_screening == "윈윈대진":
-    guidance_placeholder.markdown(
-        "<p style='color: #005088; font-size: 14px; font-weight: bold; margin-bottom: 0;'>"
-        "✨ 윈윈대진 전형: 전과목 반영 기준"
-        "</p>", 
-        unsafe_allow_html=True
-    )
 with col_sel2:
     if "모집단위" in db[selected_track].columns:
         custom_order = [
@@ -289,22 +272,16 @@ col_config = {
 }
 
 col1, col2, col3 = st.columns(3)
-
 with col1:
     st.markdown('<div class="grade-title-panel">🌱 1학년 성적</div>', unsafe_allow_html=True)
-    # [패치] st.empty()로 방어막을 치고 그 위에 표를 렌더링합니다.
-    placeholder1 = st.empty()
-    df_1 = placeholder1.data_editor(get_empty_df(), column_config=col_config, num_rows="dynamic", key=f"df1_{st.session_state.reset_key}", use_container_width=True)
-
+    # [핵심 패치 3] key 이름표에 번호표(reset_key)를 붙여 계속 새로운 표로 인식하게 만듭니다.
+    df_1 = st.data_editor(get_empty_df(), column_config=col_config, num_rows="dynamic", key=f"df1_{st.session_state.reset_key}", use_container_width=True)
 with col2:
     st.markdown('<div class="grade-title-panel">🌿 2학년 성적</div>', unsafe_allow_html=True)
-    placeholder2 = st.empty()
-    df_2 = placeholder2.data_editor(get_empty_df(), column_config=col_config, num_rows="dynamic", key=f"df2_{st.session_state.reset_key}", use_container_width=True)
-
+    df_2 = st.data_editor(get_empty_df(), column_config=col_config, num_rows="dynamic", key=f"df2_{st.session_state.reset_key}", use_container_width=True)
 with col3:
     st.markdown('<div class="grade-title-panel">🌳 3학년[1학기] 성적</div>', unsafe_allow_html=True)
-    placeholder3 = st.empty()
-    df_3 = placeholder3.data_editor(get_empty_df(), column_config=col_config, num_rows="dynamic", key=f"df3_{st.session_state.reset_key}", use_container_width=True)
+    df_3 = st.data_editor(get_empty_df(), column_config=col_config, num_rows="dynamic", key=f"df3_{st.session_state.reset_key}", use_container_width=True)
 
 # --- 5. 스마트 산출 엔진 ---
 def calculate_score(df_list):
