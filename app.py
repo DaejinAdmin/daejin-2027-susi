@@ -242,7 +242,22 @@ if selected_track == "학생부우수자" and selected_dept != "데이터 로딩
 
 # --- 4. 학생부 성적 입력 UI ---
 st.write("---")
-st.subheader("📝 학생부 성적 입력")
+
+# [패치] 제목과 초기화 버튼을 좌우로 배치하기 위해 컬럼 분할 (비율 8.5 : 1.5)
+col_grade_title, col_reset = st.columns([8.5, 1.5])
+
+with col_grade_title:
+    st.subheader("📝 학생부 성적 입력")
+
+with col_reset:
+    # 다음 학생 상담을 위한 리셋 버튼
+    if st.button("🔄 전체 초기화", use_container_width=True):
+        # 내부 세션 상태(메모리)에 저장된 성적 데이터를 강제로 삭제합니다.
+        for key in ["df1", "df2", "df3"]:
+            if key in st.session_state:
+                del st.session_state[key]
+        # 화면을 즉시 새로고침하여 빈칸으로 렌더링합니다.
+        st.rerun() 
 
 def get_empty_df():
     return pd.DataFrame([{"과목명": None, "이수단위": "", "등급/성취도": ""} for _ in range(15)])
