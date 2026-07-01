@@ -272,16 +272,22 @@ col_config = {
 }
 
 col1, col2, col3 = st.columns(3)
+
 with col1:
     st.markdown('<div class="grade-title-panel">🌱 1학년 성적</div>', unsafe_allow_html=True)
-    # [핵심 패치 3] key 이름표에 번호표(reset_key)를 붙여 계속 새로운 표로 인식하게 만듭니다.
-    df_1 = st.data_editor(get_empty_df(), column_config=col_config, num_rows="dynamic", key=f"df1_{st.session_state.reset_key}", use_container_width=True)
+    # [패치] st.empty()로 방어막을 치고 그 위에 표를 렌더링합니다.
+    placeholder1 = st.empty()
+    df_1 = placeholder1.data_editor(get_empty_df(), column_config=col_config, num_rows="dynamic", key=f"df1_{st.session_state.reset_key}", use_container_width=True)
+
 with col2:
     st.markdown('<div class="grade-title-panel">🌿 2학년 성적</div>', unsafe_allow_html=True)
-    df_2 = st.data_editor(get_empty_df(), column_config=col_config, num_rows="dynamic", key=f"df2_{st.session_state.reset_key}", use_container_width=True)
+    placeholder2 = st.empty()
+    df_2 = placeholder2.data_editor(get_empty_df(), column_config=col_config, num_rows="dynamic", key=f"df2_{st.session_state.reset_key}", use_container_width=True)
+
 with col3:
     st.markdown('<div class="grade-title-panel">🌳 3학년[1학기] 성적</div>', unsafe_allow_html=True)
-    df_3 = st.data_editor(get_empty_df(), column_config=col_config, num_rows="dynamic", key=f"df3_{st.session_state.reset_key}", use_container_width=True)
+    placeholder3 = st.empty()
+    df_3 = placeholder3.data_editor(get_empty_df(), column_config=col_config, num_rows="dynamic", key=f"df3_{st.session_state.reset_key}", use_container_width=True)
 
 # --- 5. 스마트 산출 엔진 ---
 def calculate_score(df_list):
