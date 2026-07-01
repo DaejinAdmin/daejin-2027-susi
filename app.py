@@ -113,7 +113,8 @@ with col_count:
         if st.session_state.show_counter:
             st.metric(label="수시 상담 누적 건수", value=f"{current_total_consultations} 건")
 
-st.markdown("일반/진로 구분 없이 입력 (A/B/C 입력 시 진로과목 인식) | 상위 18과목 반영 (진로 최대 8과목) | 미달 시 9등급 적용")
+# [새로 넣을 코드] 방금 지운 줄 자리에 이 한 줄을 넣습니다.
+guidance_placeholder = st.empty()
 
 # --- 2. 스마트 입시 결과 데이터 로드 ---
 @st.cache_data
@@ -181,6 +182,22 @@ col_sel1, col_sel2 = st.columns(2)
 with col_sel1:
     track_list = ["학생부우수자", "윈윈대진", "학교장추천"]
     selected_track = st.selectbox("전형 선택", track_list)
+    # [여기에 복사/붙여넣기] 전형 선택 selectbox 코드 바로 아래에 붙여넣습니다.
+
+if selected_screening in ["학생부우수자", "학교장추천"]:
+    guidance_placeholder.markdown(
+        "<p style='color: #666666; font-size: 14px; margin-bottom: 0;'>"
+        "일반/진로 구분 없이 입력 (A/B/C 입력 시 진로과목 인식) | 상위 18과목 반영 (진로 최대 8과목) | 미달 시 9등급 적용"
+        "</p>", 
+        unsafe_allow_html=True
+    )
+elif selected_screening == "윈윈대진":
+    guidance_placeholder.markdown(
+        "<p style='color: #005088; font-size: 14px; font-weight: bold; margin-bottom: 0;'>"
+        "✨ 윈윈대진 전형: 전과목 반영 기준"
+        "</p>", 
+        unsafe_allow_html=True
+    )
 with col_sel2:
     if "모집단위" in db[selected_track].columns:
         custom_order = [
