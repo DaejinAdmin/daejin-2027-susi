@@ -60,19 +60,34 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# --- 실시간 누적 상담 카운팅 파일 제어 엔진 ---
+# --- 실시간 누적 상담 카운팅 파일 제어 엔진 (방어 로직 적용) ---
 COUNT_FILE = "consulting_count.txt"
 
 def get_consulting_count():
     if not os.path.exists(COUNT_FILE):
-        with open(COUNT_FILE, "w", encoding="utf-8") as f:
-            f.write("0")
+        try:
+            with open(COUNT_FILE, "w", encoding="utf-8") as f:
+                f.write("0")
+        except:
+            pass # 생성 시 충돌 발생하면 무시
         return 0
     try:
         with open(COUNT_FILE, "r", encoding="utf-8") as f:
             return int(f.read().strip())
     except:
-        return 0
+        return 0 # 읽기 실패 시 앱 크래시 방지
+
+def increase_consulting_count():
+    try:
+        current = get_consulting_count()
+        new_count = current + 1
+        with open(COUNT_FILE, "w", encoding="utf-8") as f:
+            f.write(str(new_count))
+        return new_count
+    except Exception:
+        # [동시 접속 방어] 파일 잠금(Lock) 에러 발생 시 앱을 멈추지 않고, 
+        # 화면의 성적 산출 기능을 정상 작동시키기 위해 기존 숫자만 반환
+        return get_consulting_count()
 
 def increase_consulting_count():
     current = get_consulting_count()
