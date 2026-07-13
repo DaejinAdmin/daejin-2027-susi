@@ -76,7 +76,13 @@ with col_logo:
     elif os.path.exists("스크린샷 2026-06-24 093817.png"): st.image("스크린샷 2026-06-24 093817.png", use_container_width=True)
 
 with col_title:
-    st.markdown("<div style='font-size: 30px; font-weight: 800; color: #000000; padding-top: 28px; letter-spacing: -1.5px; white-space: nowrap;'>2027학년도 대진대학교 수시 입학상담 솔루션</div>", unsafe_allow_html=True)
+    st.markdown("""
+    <div style='display: flex; align-items: center; height: 80px;'>
+        <div style='font-size: 30px; font-weight: 800; color: #000000; letter-spacing: -1.5px; white-space: nowrap;'>
+            2027학년도 대진대학교 수시 입학상담 솔루션
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
 with col_count:
     if IS_ONLINE_MODE:
