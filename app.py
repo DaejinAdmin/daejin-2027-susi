@@ -377,7 +377,7 @@ with col_left:
             # ==================================================
             # 🚨 [신규 패치] 진로·진학 워크북 안내 팝오버 탑재 구역
             # ==================================================
-            with st.popover(f"📘 {selected_dept} 진로·진학 워크북 보기 (클릭)", use_container_width=True):
+            with st.popover(f"📘 {selected_dept} 학과 안내", use_container_width=True):
                 image_path = f"assets/{selected_dept}.png"
                 if os.path.exists(image_path):
                     st.image(image_path, use_container_width=True)
