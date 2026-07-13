@@ -74,11 +74,10 @@ if "show_counter" not in st.session_state:
 col_logo, col_title, col_count = st.columns([0.8, 8.2, 3.0])
 
 with col_logo:
-    # 🚨 Warning 방어 로직: use_column_width 대신 신규 API width="stretch" 적용
-    if os.path.exists("logo.png"): st.image("logo.png", width="stretch")
-    elif os.path.exists("logo.jpg"): st.image("logo.jpg", width="stretch")
-    elif os.path.exists("logo.png.png"): st.image("logo.png.png", width="stretch")
-    elif os.path.exists("스크린샷 2026-06-24 093817.png"): st.image("스크린샷 2026-06-24 093817.png", width="stretch")
+    if os.path.exists("logo.png"): st.image("logo.png", use_container_width=True)
+    elif os.path.exists("logo.jpg"): st.image("logo.jpg", use_container_width=True)
+    elif os.path.exists("logo.png.png"): st.image("logo.png.png", use_container_width=True)
+    elif os.path.exists("스크린샷 2026-06-24 093817.png"): st.image("스크린샷 2026-06-24 093817.png", use_container_width=True)
 
 with col_title:
     st.title("2027학년도 대진대학교 수시 입학상담 솔루션")
@@ -93,7 +92,7 @@ with col_count:
         is_admin = True
         
     if is_admin:
-        if st.button("📊 상담 건수 확인", width="stretch"):
+        if st.button("📊 상담 건수 확인", use_container_width=True):
             st.session_state.show_counter = not st.session_state.show_counter
         
         if st.session_state.show_counter:
@@ -222,7 +221,7 @@ col_grade_title, col_reset = st.columns([8.5, 1.5])
 
 with col_grade_title: st.subheader("📝 학생부 성적 입력")
 with col_reset:
-    if st.button("🔄 초기화", width="stretch"):
+    if st.button("🔄 초기화", use_container_width=True):
         st.session_state.reset_key += 1
         st.rerun() 
 
@@ -235,13 +234,13 @@ col_config = {
 col1, col2, col3 = st.columns(3)
 with col1:
     st.markdown('<div class="grade-title-panel">🌱 1학년 성적</div>', unsafe_allow_html=True)
-    df_1 = st.data_editor(get_empty_df(), column_config=col_config, num_rows="dynamic", key=f"df1_{st.session_state.reset_key}", width="stretch")
+    df_1 = st.data_editor(get_empty_df(), column_config=col_config, num_rows="dynamic", key=f"df1_{st.session_state.reset_key}", use_container_width=True)
 with col2:
     st.markdown('<div class="grade-title-panel">🌿 2학년 성적</div>', unsafe_allow_html=True)
-    df_2 = st.data_editor(get_empty_df(), column_config=col_config, num_rows="dynamic", key=f"df2_{st.session_state.reset_key}", width="stretch")
+    df_2 = st.data_editor(get_empty_df(), column_config=col_config, num_rows="dynamic", key=f"df2_{st.session_state.reset_key}", use_container_width=True)
 with col3:
     st.markdown('<div class="grade-title-panel">🌳 3학년[1학기] 성적</div>', unsafe_allow_html=True)
-    df_3 = st.data_editor(get_empty_df(), column_config=col_config, num_rows="dynamic", key=f"df3_{st.session_state.reset_key}", width="stretch")
+    df_3 = st.data_editor(get_empty_df(), column_config=col_config, num_rows="dynamic", key=f"df3_{st.session_state.reset_key}", use_container_width=True)
 
 def calculate_score(df_list):
     gen_u, gen_g, car_u, car_g = [], [], [], []
@@ -291,7 +290,7 @@ with col_left:
         st.markdown("### 🎯 성적 산출")
         col_btn, col_metric, col_badge = st.columns([3, 2, 3])
         with col_btn:
-            calc_clicked = st.button("성적 산출", width="stretch", type="primary")
+            calc_clicked = st.button("성적 산출", use_container_width=True, type="primary")
             manual_score = st.number_input("직접 입력(선택)", min_value=0.0, max_value=9.0, value=0.0, step=0.01)
             
         if calc_clicked or manual_score > 0:
@@ -306,9 +305,9 @@ with col_left:
             st.write("---")
             st.markdown(f"#### 🏫 **[{selected_dept}] 입시 결과**")
             
-            with st.popover(f"📘 {selected_dept} 학과 안내 바로가기", width="stretch"):
+            with st.popover(f"📘 {selected_dept} 학과 안내 바로가기", use_container_width=True):
                 image_path = f"assets/{selected_dept}.png"
-                if os.path.exists(image_path): st.image(image_path, width="stretch")
+                if os.path.exists(image_path): st.image(image_path, use_container_width=True)
                 else: st.warning(f"'{selected_dept}'의 안내 자료 이미지가 assets 폴더에 없습니다.")
             
             if selected_dept == "데이터 로딩 실패" or selected_dept == "데이터 없음":
@@ -393,7 +392,7 @@ with col_left:
                     "최고등급": [max_26, max_25, max_24],
                     "추가합격": [f"{chu_26}명" if str(chu_26) != "-" else "-", f"{chu_25}명" if str(chu_25) != "-" else "-", f"{chu_24}명" if str(chu_24) != "-" else "-"]
                 }).set_index("연도")
-                st.dataframe(summary_df.style.set_properties(**{'text-align': 'center'}), width="stretch")
+                st.dataframe(summary_df.style.set_properties(**{'text-align': 'center'}), use_container_width=True)
     
                 if str(pred_avg) != "-" and str(pred_cut) != "-" and str(pred_max) != "-":
                     try:
@@ -464,7 +463,7 @@ with col_left:
                 if rec_data:
                     rec_df = pd.DataFrame(rec_data).sort_values(by=["지원 전략", "기준 평균"], ascending=[True, True]).reset_index(drop=True)
                     rec_df.index = rec_df.index + 1
-                    st.dataframe(rec_df.style.set_properties(**{'text-align': 'center'}), width="stretch")
+                    st.dataframe(rec_df.style.set_properties(**{'text-align': 'center'}), use_container_width=True)
                 else: st.info(f"현재 점수로 **{selected_track}** 내에서 안정/적정권에 해당하는 타 학과가 없습니다. 소신/상향 지원 전략을 고려해보세요.")
 
 with col_right:
@@ -540,7 +539,7 @@ with col_right:
                 text_avg = alt.Chart(df_grade).mark_text(dx=35, fontSize=12, fontWeight='bold', color='#ff4b4b').encode(x='연도:N', y='평균:Q', text='평균등급:N')
                 text_min = alt.Chart(df_grade).mark_text(dy=15, fontSize=12, fontWeight='bold', color='#00308F').encode(x='연도:N', y='최저_렌더:Q', text='최저등급:N')
 
-                st.altair_chart(alt.layer(bar, tick, text_max, text_avg, text_min).properties(height=275), width="stretch")
+                st.altair_chart(alt.layer(bar, tick, text_max, text_avg, text_min).properties(height=275), use_container_width=True)
     
             if not comp_chart_data.isna().all().all():
                 st.write("---")
@@ -558,7 +557,7 @@ with col_right:
                 points = base.mark_point(color='#ff4b4b', size=140, fill='white', strokeWidth=3, opacity=1)
                 text = base.mark_text(dy=-22, fontSize=13, fontWeight='bold', color='#334155').encode(text='레이블:N')
                 
-                st.altair_chart(alt.layer(area, line, points, text).properties(height=275), width="stretch")
+                st.altair_chart(alt.layer(area, line, points, text).properties(height=275), use_container_width=True)
                 
 st.write("---")
 st.markdown(f"### 📋 [{selected_track}] 전체 학과 3개년 입시 결과 종합표")
@@ -618,4 +617,4 @@ else:
                 elif "2024" in col: styles.append('background-color: rgba(255, 228, 196, 0.35);')
                 else: styles.append('')
             return styles
-        st.dataframe(all_df.style.apply(apply_custom_styles, axis=1).set_properties(**{'text-align': 'center'}), width="stretch")
+        st.dataframe(all_df.style.apply(apply_custom_styles, axis=1).set_properties(**{'text-align': 'center'}), use_container_width=True)
