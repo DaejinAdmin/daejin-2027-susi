@@ -10,7 +10,7 @@ import re
 IS_ONLINE_MODE = True  
 # ==================================================
 
-st.set_page_config(page_title="2027 대진대 수시 입학상담 솔루션", layout="wide")
+st.set_page_config(page_title="2027대진대 수시 입학상담 솔루션", layout="wide")
 
 st.markdown("""
 <style>
