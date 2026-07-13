@@ -78,7 +78,7 @@ with col_logo:
 with col_title:
     st.markdown("""
     <div style='display: flex; align-items: center; height: 80px;'>
-        <div style='font-size: 42px; font-weight: 800; color: #000000; letter-spacing: -1.5px; white-space: nowrap;'>
+        <div style='font-size: 44px; font-weight: 800; color: #000000; letter-spacing: -1.5px; white-space: nowrap;'>
             2027학년도 대진대학교 수시 입학상담 솔루션
         </div>
     </div>
