@@ -10,7 +10,7 @@ import re
 IS_ONLINE_MODE = True  
 # ==================================================
 
-st.set_page_config(page_title="2027대진대 수시 입학상담 솔루션", layout="wide")
+st.set_page_config(page_title="2027 대진대 수시 입학상담 솔루션", layout="wide")
 
 st.markdown("""
 <style>
@@ -76,7 +76,7 @@ with col_logo:
     elif os.path.exists("스크린샷 2026-06-24 093817.png"): st.image("스크린샷 2026-06-24 093817.png", use_container_width=True)
 
 with col_title:
-    st.title("2027학년도 대진대학교 수시 입학상담 솔루션")
+    st.markdown("<div style='font-size: 28px; font-weight: 800; color: #000000; padding-top: 20px; letter-spacing: -1.5px; white-space: nowrap;'>2027학년도 대진대학교 수시 입학상담 솔루션</div>", unsafe_allow_html=True)
 
 with col_count:
     if IS_ONLINE_MODE:
