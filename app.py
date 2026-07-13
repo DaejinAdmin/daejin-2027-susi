@@ -89,13 +89,6 @@ def increase_consulting_count():
         # 화면의 성적 산출 기능을 정상 작동시키기 위해 기존 숫자만 반환
         return get_consulting_count()
 
-def increase_consulting_count():
-    current = get_consulting_count()
-    new_count = current + 1
-    with open(COUNT_FILE, "w", encoding="utf-8") as f:
-        f.write(str(new_count))
-    return new_count
-
 current_total_consultations = get_consulting_count()
 
 if "show_counter" not in st.session_state:
@@ -210,7 +203,7 @@ with col_sel2:
             "간호학과", "보건경영학과", "스포츠건강과학과", "공학자율학부",
             "전기공학과", "건축공학과", "AI건설융합공학과", "스마트시티·환경공학과",
             "데이터경영산업공학과", "반도체융합공학과", "IT기계공학과", "화학공학과",
-            "컴퓨터공학과", "스마트융합보안학과", "AI빅데이터공학과", "스마트모빌리티공학과",
+            "컴퓨학과", "스마트융합보안학과", "AI빅데이터공학과", "스마트모빌리티공학과",
             "자율전공학부"
         ]
         raw_dept_list = db[selected_track]["모집단위"].dropna().unique().tolist()
@@ -381,6 +374,17 @@ with col_left:
             st.write("---")
             st.markdown(f"#### 🏫 **[{selected_dept}] 입시 결과**")
             
+            # ==================================================
+            # 🚨 [신규 패치] 진로·진학 워크북 안내 팝오버 탑재 구역
+            # ==================================================
+            with st.popover(f"📘 {selected_dept} 진로·진학 워크북 보기 (클릭)", use_container_width=True):
+                image_path = f"assets/{selected_dept}.png"
+                if os.path.exists(image_path):
+                    st.image(image_path, use_container_width=True)
+                else:
+                    st.warning(f"'{selected_dept}'의 안내 자료 이미지가 assets 폴더에 없습니다.")
+            # ==================================================
+            
             if selected_dept == "데이터 로딩 실패" or selected_dept == "데이터 없음":
                 st.error("엑셀 파일 로딩 오류로 비교가 불가능합니다.")
             else:
@@ -513,7 +517,7 @@ with col_left:
                 t_name = selected_track
                 if t_name in db and not db[t_name].empty and "모집단위" in db[t_name].columns:
                     t_df = db[t_name]
-                    for d_name in dept_list:
+                    for d_name in dept_list: 
                         if d_name == selected_dept: continue
                         d_data = t_df[t_df["모집단위"] == d_name]
                         if d_data.empty: continue
@@ -615,7 +619,7 @@ with col_right:
             m25_r, c25_r = get_render_bounds(m25_f, c25_f)
             m26_r, c26_r = get_render_bounds(m26_f, c26_f)
 
-# [1] 데이터프레임 선언부 (이 부분이 지워졌을 확률이 높습니다. 복구 완료)
+            # [1] 데이터프레임 선언부
             df_grade = pd.DataFrame({
                 "연도": ["2024년", "2025년", "2026년"],
                 "최고_렌더": [m24_r, m25_r, m26_r],
@@ -631,7 +635,7 @@ with col_right:
                 "경쟁률": [safe_float(comp_24), safe_float(comp_25), safe_float(comp_26)]
             }).set_index("연도")
 
-            # [2] 첫 번째 차트 렌더링 (글자 세우기 + 수치 고정 패치 적용)
+            # [2] 첫 번째 차트 렌더링
             if not df_grade[["최고_렌더", "최저_렌더", "평균"]].isna().all().all():
                 st.markdown("📈 **3개년 입시 결과 등급 스펙트럼 차트**")
                 
@@ -659,14 +663,14 @@ with col_right:
 
                 st.altair_chart(alt.layer(bar, tick, text_max, text_avg, text_min).properties(height=275), use_container_width=True)
     
-# [3] 두 번째 차트 렌더링 (세련된 모던 UI 적용)
+            # [3] 두 번째 차트 렌더링
             if not comp_chart_data.isna().all().all():
                 st.write("---")
                 st.markdown("🔥 **3개년 경쟁률 추이 그래프**")
                 df_comp_long = comp_chart_data.reset_index()
                 df_comp_long['레이블'] = df_comp_long['경쟁률'].apply(lambda x: f"{x:.2f}:1" if pd.notna(x) else "")
                 
-                # ① Y축 그리드를 연한 점선으로 세팅하여 세련미 추가 & 불필요한 테두리 제거
+                # ① Y축 그리드 세팅 및 테두리 제거
                 base = alt.Chart(df_comp_long).encode(
                     x=alt.X('연도:N', axis=alt.Axis(
                         labelAngle=0, grid=False, labelFontSize=12, labelFontWeight='bold', 
@@ -679,7 +683,7 @@ with col_right:
                     ))
                 )
                 
-                # ② 그라데이션 영역 (위는 진하게, 아래는 흰색으로 자연스럽게 페이드아웃)
+                # ② 그라데이션 영역
                 area = base.mark_area(
                     color=alt.Gradient(
                         gradient='linear',
@@ -691,13 +695,13 @@ with col_right:
                     interpolate='monotone'
                 )
                 
-                # ③ 선 굵기를 정돈하여 샤프하게 유지
+                # ③ 선 스타일
                 line = base.mark_line(color='#ff4b4b', size=3.5, interpolate='monotone')
                 
-                # ④ 모던 UI 스타일 포인트 (테두리는 붉은색, 내부는 흰색으로 타공)
+                # ④ 모던 UI 포인트
                 points = base.mark_point(color='#ff4b4b', size=140, fill='white', strokeWidth=3, opacity=1)
                 
-                # ⑤ 텍스트 가독성 조정 (완전 블랙이 아닌 짙은 그레이로 눈을 편안하게)
+                # ⑤ 텍스트 스타일
                 text = base.mark_text(dy=-22, fontSize=13, fontWeight='bold', color='#334155').encode(text='레이블:N')
                 
                 st.altair_chart(alt.layer(area, line, points, text).properties(height=275), use_container_width=True)
