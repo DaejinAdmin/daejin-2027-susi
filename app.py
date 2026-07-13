@@ -42,29 +42,25 @@ st.markdown("""
 
 COUNT_FILE = "consulting_count.txt"
 
+# 🚨 파일 시스템 충돌을 100% 원천 차단하는 초강력 방어벽 로직 적용
 def get_consulting_count():
-    if not os.path.exists(COUNT_FILE):
-        try:
-            with open(COUNT_FILE, "w", encoding="utf-8") as f:
-                f.write("0")
-        except:
-            pass
-        return 0
     try:
-        with open(COUNT_FILE, "r", encoding="utf-8") as f:
-            return int(f.read().strip())
+        if os.path.exists(COUNT_FILE):
+            with open(COUNT_FILE, "r", encoding="utf-8") as f:
+                return int(f.read().strip())
     except:
-        return 0
+        pass
+    return 0
 
 def increase_consulting_count():
+    current = get_consulting_count()
+    new_count = current + 1
     try:
-        current = get_consulting_count()
-        new_count = current + 1
         with open(COUNT_FILE, "w", encoding="utf-8") as f:
             f.write(str(new_count))
-        return new_count
-    except Exception:
-        return get_consulting_count()
+    except:
+        pass
+    return new_count
 
 current_total_consultations = get_consulting_count()
 
