@@ -471,7 +471,7 @@ with col_left:
 with col_right:
     if (calc_clicked or manual_score > 0) and selected_dept != "데이터 로딩 실패" and selected_dept != "데이터 없음":
         import altair as alt
-        with st.container(border=True):
+        with st.container():
             st.markdown("### 📊 입시 결과 추이 분석")
             
             def safe_float(val):
@@ -528,34 +528,22 @@ with col_right:
                 "경쟁률": [safe_float(comp_24), safe_float(comp_25), safe_float(comp_26)]
             }).set_index("연도")
 
-# 내 성적을 데이터프레임에 추가
-df_grade['내성적'] = manual_score 
+            if not df_grade[["최고_렌더", "최저_렌더", "평균"]].isna().all().all():
+                st.markdown("📈 **3개년 입시 결과 등급 스펙트럼 차트**")
+                bar = alt.Chart(df_grade).mark_bar(size=45, color='#00308F', opacity=0.55, cornerRadius=4).encode(
+                    x=alt.X('연도:N', title=None, axis=alt.Axis(labelAngle=0, labelFontSize=12, labelFontWeight='bold')),
+                    y=alt.Y('최고_렌더:Q', scale=alt.Scale(zero=False, reverse=True), axis=alt.Axis(title='등급', titleAngle=0, titlePadding=20, titleAlign='right')), 
+                    y2='최저_렌더:Q',
+                    tooltip=[alt.Tooltip('연도:N'), alt.Tooltip('최고등급:N'), alt.Tooltip('평균등급:N'), alt.Tooltip('최저등급:N')]
+                )
+                tick = alt.Chart(df_grade).mark_tick(color='#ff4b4b', thickness=4.5, size=45).encode(x='연도:N', y='평균:Q')
+                text_max = alt.Chart(df_grade).mark_text(dy=-15, fontSize=12, fontWeight='bold', color='#00308F').encode(x='연도:N', y='최고_렌더:Q', text='최고등급:N')
+                text_avg = alt.Chart(df_grade).mark_text(dx=35, fontSize=12, fontWeight='bold', color='#ff4b4b').encode(x='연도:N', y='평균:Q', text='평균등급:N')
+                text_min = alt.Chart(df_grade).mark_text(dy=15, fontSize=12, fontWeight='bold', color='#00308F').encode(x='연도:N', y='최저_렌더:Q', text='최저등급:N')
 
-# 1. 기존 차트 요소 수정
-# 평균(tick)을 파란색으로 변경 (#00308F)
-tick = alt.Chart(df_grade).mark_tick(color='#00308F', thickness=4.5, size=45).encode(x='연도:N', y='평균:Q')
-text_avg = alt.Chart(df_grade).mark_text(dx=35, fontSize=12, fontWeight='bold', color='#00308F').encode(x='연도:N', y='평균:Q', text='평균등급:N')
+                # 차트 너비 확장 복구
+                st.altair_chart(alt.layer(bar, tick, text_max, text_avg, text_min).properties(height=275), use_container_width=True)
 
-# 2. 내 성적을 표시할 빨간색 라인/포인트 추가
-my_score_line = alt.Chart(df_grade).mark_rule(color='#ff4b4b', strokeDash=[5, 5], thickness=2).encode(y='내성적:Q')
-my_score_text = alt.Chart(df_grade.tail(1)).mark_text(dy=-10, fontSize=13, fontWeight='bold', color='#ff4b4b').encode(
-    x=alt.value(200), # 우측 끝 지점
-    y='내성적:Q',
-    text=alt.value(f"내 성적 ({manual_score})")
-)
-
-# 3. 레이어 합치기 (최종 구성)
-chart = alt.layer(bar, tick, text_max, text_avg, text_min, my_score_line, my_score_text).properties(height=275)
-
-st.altair_chart(chart, use_container_width=True)
-
-# 4. 범례 안내 문구 추가
-st.markdown("""
-<div style='display: flex; gap: 15px; font-size: 13px; font-weight: bold;'>
-    <span style='color: #00308F;'>■ 평균 등급</span>
-    <span style='color: #ff4b4b;'>-- 내 성적</span>
-</div>
-""", unsafe_allow_html=True)
     
             if not comp_chart_data.isna().all().all():
                 st.write("---")
