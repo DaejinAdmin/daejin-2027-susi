@@ -351,7 +351,7 @@ with col_left:
                 avg_25, cut_25, max_25, chu_25, comp_25 = [format_num(x) for x in get_year_data("2025", "25")]
                 avg_24, cut_24, max_24, chu_24, comp_24 = [format_num(x) for x in get_year_data("2024", "24")]
     
-                mojib_badge = f'<div style="font-size: 28px; font-weight: bold; color: #1e3a8a; background-color: #dbeafe; border: 1px solid #bfdbfe; padding: 6px 18px; border-radius: 24px;">🎓 모집인원: {mojib_2027}명</div>' if mojib_2027 != "-" else ""
+                mojib_badge = f'<div style="font-size: 24px; font-weight: bold; color: #1e3a8a; background-color: #dbeafe; border: 1px solid #bfdbfe; padding: 4px 14px; border-radius: 24px;">🎓 모집인원: {mojib_2027}명</div>' if mojib_2027 != "-" else ""
                 
                 if hwansan_avg != "-" and hwansan_cut != "-":
                     st.markdown(f"""
